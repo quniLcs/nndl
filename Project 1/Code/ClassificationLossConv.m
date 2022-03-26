@@ -45,20 +45,6 @@ function [loss, gradLinear] = ClassificationLossConv...
                     (error * weightHidden{indexHidden}');
             end
             % input layer
-                % for indexHori = 1:5
-                %     for indexVerti = 1:5
-                %         img = reshape(X(indexInput, 2:end), 16, 16);
-                %         kernal = zeros(5, 5);
-                %         kernal(indexVerti, indexHori) = 1;
-                %         img = conv2(img, kernal, 'same');
-                %         gradInput(5 * 5 * (indexConv - 1) + ...
-                %             5 * (indexHori - 1) + indexVerti) = ...
-                %             gradInput(5 * 5 * (indexConv - 1) + ...
-                %             5 * (indexHori - 1) + indexVerti) + ...
-                %             error(256 * (indexConv - 1) + 1: ...
-                %             256 * indexConv) * img(:);
-                %     end
-                % end
             kernal = reshape(error, 16, 16);
             img = reshape(X(indexInput, 2:end), 16, 16);
             img = imrotate(img, 180);
