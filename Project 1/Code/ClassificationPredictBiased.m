@@ -11,12 +11,12 @@ function yPred = ClassificationPredictBiased...
     yPred = zeros(n, nLabel);
     for indexInput = 1:n
         NetActivation{1} = X(indexInput, :) * weightInput;
-        Activation{1} = tanh([NetActivation{1}, 1]);
+        Activation{1} = [tanh(NetActivation{1}), 1];
         for indexHidden = 2: length(nHidden)
             NetActivation{indexHidden} = Activation{indexHidden - 1} * ...
                 weightHidden{indexHidden - 1};
             Activation{indexHidden} = ...
-                tanh([NetActivation{indexHidden}, 1]);
+                [tanh(NetActivation{indexHidden}), 1];
         end
         yPred(indexInput,:) = Activation{end} * weightOutput;
     end
