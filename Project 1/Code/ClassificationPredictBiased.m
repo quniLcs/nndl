@@ -6,17 +6,17 @@ function yPred = ClassificationPredictBiased...
         FormWeightsBiased(weightLinear, dim, nHidden, nLabel);
 
     % compute output
-    NetActivation = cell(length(nHidden), 1);
+    netActivation = cell(length(nHidden), 1);
     Activation = cell(length(nHidden), 1);
     yPred = zeros(n, nLabel);
     for indexInput = 1:n
-        NetActivation{1} = X(indexInput, :) * weightInput;
-        Activation{1} = [tanh(NetActivation{1}), 1];
+        netActivation{1} = X(indexInput, :) * weightInput;
+        Activation{1} = [tanh(netActivation{1}), 1];
         for indexHidden = 2: length(nHidden)
-            NetActivation{indexHidden} = Activation{indexHidden - 1} * ...
+            netActivation{indexHidden} = Activation{indexHidden - 1} * ...
                 weightHidden{indexHidden - 1};
             Activation{indexHidden} = ...
-                [tanh(NetActivation{indexHidden}), 1];
+                [tanh(netActivation{indexHidden}), 1];
         end
         yPred(indexInput,:) = Activation{end} * weightOutput;
     end
