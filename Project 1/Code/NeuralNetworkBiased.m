@@ -28,7 +28,6 @@ end
 
 nHidden = 10;
 
-
 iterMax = 100000;
 iterRecord = 20;
 iterStep = floor(iterMax / iterRecord);
