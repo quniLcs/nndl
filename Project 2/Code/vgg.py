@@ -92,13 +92,6 @@ class VGG_Light(nn.Module):
         '''
 
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 1 * 1, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, num_classes))
-
-        self.classifier = nn.Sequential(
             nn.Linear(32 * 8 * 8, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
