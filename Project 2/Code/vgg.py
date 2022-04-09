@@ -1,12 +1,5 @@
-import numpy as np
 from torch import nn
-
-
-def get_num_parameters(model):
-    num_parameters = 0
-    for parameter in model.parameters():
-        num_parameters += np.prod(parameter.shape)
-    return num_parameters
+from util import get_num_parameters
 
 
 def init_parameters(module):
