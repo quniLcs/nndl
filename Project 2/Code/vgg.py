@@ -2,17 +2,6 @@ from torch import nn
 from util import get_num_parameters
 
 
-def init_parameters(module):
-    if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
-        nn.init.xavier_normal_(module.weight)
-        if module.bias is not None:
-            nn.init.zeros_(module.bias)
-
-    elif isinstance(module, nn.BatchNorm1d) or isinstance(module, nn.BatchNorm2d):
-        nn.init.ones_(module.weight)
-        nn.init.zeros_(module.bias)
-
-
 class VGG(nn.Module):
     def __init__(self, in_channels = 3, num_classes = 10):
         super().__init__()
