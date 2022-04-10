@@ -24,7 +24,7 @@ def get_num_parameters(model):
 
 def wrap_tqdm(data_loader, wrap_tqdms, ind_epoch, num_epochs):
     if wrap_tqdms:
-        return tqdm(data_loader, unit = 'batch', desc = 'Epoch: %3d/%3d' % (ind_epoch + 1, num_epochs))
+        return tqdm(data_loader, unit = 'batch', desc = 'Epoch: %2d/%2d' % (ind_epoch + 1, num_epochs))
     else:
         return data_loader
 
@@ -68,7 +68,7 @@ def eval_error(model, data_loader, device, wrap_tqdms, ind_epoch, num_epochs):
     return error
 
 
-def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 100, device = 'cpu',
+def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 20, device = 'cpu',
           wrap_tqdms = False, print_errors = False,
           best_model_file = '', losses_file = '',
           train_errors_file = '', test_errors_file = ''):
@@ -90,7 +90,7 @@ def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 1
         test_errors.append(test_error)
 
         if print_errors:
-            print('Epoch: %3d\tTrain Error: %.5f\tTest Error: %.5f' % (ind_epoch + 1, train_error, test_error))
+            print('Epoch: %2d\tTrain Error: %.5f\tTest Error: %.5f' % (ind_epoch + 1, train_error, test_error))
 
         if best_model_file and test_error < min_test_error:
             min_test_error = test_error
