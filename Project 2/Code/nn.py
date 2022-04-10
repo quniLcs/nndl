@@ -112,3 +112,5 @@ class NN_softplus(nn.Module):
 
 if __name__ == '__main__':
     print(get_num_parameters(NN()))
+    print(get_num_parameters(NN_tanh()))
+    print(get_num_parameters(NN_softplus()))
