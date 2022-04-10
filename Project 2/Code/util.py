@@ -72,6 +72,7 @@ def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 2
           wrap_tqdms = False, print_errors = False,
           best_model_file = '', losses_file = '',
           train_errors_file = '', test_errors_file = ''):
+    set_random_seeds(seed = 0, device = device)
     model.to(device)
 
     losses = []
