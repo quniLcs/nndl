@@ -108,18 +108,18 @@ def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 2
 
 
 def loss_landscape(losses):
-    min_curve = losses[0]
-    max_curve = losses[0]
+    num_epoch = len(losses[0])
+    num_batch = len(losses[0][0])
 
-    for ind in range(1, len(losses)):
-        for ind_epoch in range(len(losses[0])):
-            for ind_batch in range(len(losses[0][0])):
-                if losses[ind][ind_epoch][ind_batch] < min_curve[ind_epoch][ind_batch]:
-                    min_curve[ind_epoch][ind_batch] = losses[ind][ind_epoch][ind_batch]
-                elif losses[ind][ind_epoch][ind_batch] > max_curve[ind_epoch][ind_batch]:
-                    max_curve[ind_epoch][ind_batch] = losses[ind][ind_epoch][ind_batch]
+    min_curve = [np.inf for _ in range(num_epoch * num_batch)]
+    max_curve = [-np.inf for _ in range(num_epoch * num_batch)]
 
-    min_curve = [value for sub_curve in min_curve for value in sub_curve]
-    max_curve = [value for sub_curve in max_curve for value in sub_curve]
+    for ind in range(len(losses)):
+        for ind_epoch in range(num_epoch):
+            for ind_batch in range(num_batch):
+                if losses[ind][ind_epoch][ind_batch] < min_curve[ind_epoch * num_batch + ind_batch]:
+                    min_curve[ind_epoch * num_batch + ind_batch] = losses[ind][ind_epoch][ind_batch]
+                elif losses[ind][ind_epoch][ind_batch] > max_curve[ind_epoch * num_batch + ind_batch]:
+                    max_curve[ind_epoch * num_batch + ind_batch] = losses[ind][ind_epoch][ind_batch]
 
     return min_curve, max_curve
