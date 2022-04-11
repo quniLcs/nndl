@@ -1,0 +1,43 @@
+prob = 0.2
+Epoch:  1	Train Error: 0.49126	Test Error: 0.49080
+Epoch:  2	Train Error: 0.43424	Test Error: 0.44030
+Epoch:  3	Train Error: 0.37546	Test Error: 0.39340
+Epoch:  4	Train Error: 0.35702	Test Error: 0.38580
+Epoch:  5	Train Error: 0.32522	Test Error: 0.36290
+Epoch:  6	Train Error: 0.31072	Test Error: 0.35620
+Epoch:  7	Train Error: 0.28528	Test Error: 0.34010
+Epoch:  8	Train Error: 0.27122	Test Error: 0.32980
+Epoch:  9	Train Error: 0.25570	Test Error: 0.32370
+Epoch: 10	Train Error: 0.24756	Test Error: 0.32270
+Epoch: 11	Train Error: 0.23814	Test Error: 0.32010
+Epoch: 12	Train Error: 0.22912	Test Error: 0.32150
+Epoch: 13	Train Error: 0.22290	Test Error: 0.31770
+Epoch: 14	Train Error: 0.21202	Test Error: 0.31870
+Epoch: 15	Train Error: 0.20846	Test Error: 0.31510
+Epoch: 16	Train Error: 0.20046	Test Error: 0.31260
+Epoch: 17	Train Error: 0.19112	Test Error: 0.30660
+Epoch: 18	Train Error: 0.19676	Test Error: 0.31390
+Epoch: 19	Train Error: 0.18394	Test Error: 0.30770
+Epoch: 20	Train Error: 0.17718	Test Error: 0.30560
+
+prob = 0.5
+Epoch:  1	Train Error: 0.59346	Test Error: 0.58880
+Epoch:  2	Train Error: 0.52894	Test Error: 0.52700
+Epoch:  3	Train Error: 0.50226	Test Error: 0.50220
+Epoch:  4	Train Error: 0.48410	Test Error: 0.48290
+Epoch:  5	Train Error: 0.47096	Test Error: 0.47480
+Epoch:  6	Train Error: 0.45052	Test Error: 0.45880
+Epoch:  7	Train Error: 0.43470	Test Error: 0.43980
+Epoch:  8	Train Error: 0.42090	Test Error: 0.43280
+Epoch:  9	Train Error: 0.41724	Test Error: 0.42660
+Epoch: 10	Train Error: 0.40650	Test Error: 0.41900
+Epoch: 11	Train Error: 0.39460	Test Error: 0.41440
+Epoch: 12	Train Error: 0.39136	Test Error: 0.41310
+Epoch: 13	Train Error: 0.38568	Test Error: 0.40550
+Epoch: 14	Train Error: 0.38308	Test Error: 0.40130
+Epoch: 15	Train Error: 0.36908	Test Error: 0.39690
+Epoch: 16	Train Error: 0.36814	Test Error: 0.39590
+Epoch: 17	Train Error: 0.36680	Test Error: 0.39430
+Epoch: 18	Train Error: 0.36370	Test Error: 0.39190
+Epoch: 19	Train Error: 0.35684	Test Error: 0.38580
+Epoch: 20	Train Error: 0.34874	Test Error: 0.38150
