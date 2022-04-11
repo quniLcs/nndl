@@ -39,7 +39,7 @@
 使图像边长由32变为16再变为8，
 图像频道数由3变为16再变为32；
 接着进行三轮线性、激活操作，
-使神经元数量由32*8*8变为128再变为10。
+使神经元数量由$32\times8\times8$变为128再变为10。
 初始架构的参数数量为285162，
 类存储于\verb|Code/nn.py|，
 具体内容如下：
@@ -284,7 +284,7 @@ Adagrad & 0.23366 & 20 & 0.31240 & 18 \\
 
 \begin{figure}[p]
 \includegraphics[width=\textwidth]
-{Result/NN BN/figure.png}
+{Result/NN BN 0.001/figure.png}
 \caption{批归一化实验结果}
 \label{fig:BN}
 \end{figure}
@@ -344,7 +344,7 @@ Adagrad & 0.23366 & 20 & 0.31240 & 18 \\
 使图像边长由32变为16再变为8，
 图像频道数由3变为16再变为32；
 接着进行三轮线性、批归一化、激活操作，
-使神经元数量由32*8*8变为128再变为10。
+使神经元数量由$32\times8\times8$变为128再变为10。
 参数数量为285770，
 类存储于\verb|Code/nn.py|，
 具体内容如下：
@@ -391,10 +391,6 @@ class NN_BN(nn.Module):
 \end{lstlisting}
 
 实验结果如图\ref{fig:BN}和表\ref{table:BN}所示。
-
-\subsubsection{卷积核可视化}
-
-\subsubsection{Loss Landscape}
 
 \section{批归一化}
 	
