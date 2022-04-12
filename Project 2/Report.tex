@@ -95,7 +95,7 @@ class NN(nn.Module):
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]
-{Result/NN Original/figure.png}
+{Result/NN Original 0.001/figure.png}
 \caption{原始模型在测试集和验证集上的错误率}
 \label{fig:Original}
 \end{figure}
@@ -390,8 +390,148 @@ class NN_BN(nn.Module):
         return outputs
 \end{lstlisting}
 
-实验结果如图\ref{fig:BN}和表\ref{table:BN}所示。
+实验结果如图\ref{fig:BN}和表\ref{table:BN}所示，
+另可视化Loss Landscape如图\ref{fig:LL}所示。
 
-\section{批归一化}
+\begin{figure}[h]
+\includegraphics[width=\textwidth]
+{Result/NN BN 0.0005/figure.png}
+\caption{Loss Landscape}
+\label{fig:LL}
+\end{figure}
+
+\section{VGG网络}
+
+本项目同样使用CIFAR-10数据集。
+
+参考VGG网络架构，
+设计不带有批归一化的VGG网络和带有批归一化的VGG网络，
+类存储于\verb|Code/vgg.py|，
+具体内容如下：
+
+\begin{lstlisting}[language=python]
+class VGG(nn.Module):
+    def __init__(self, in_channels = 3, num_classes = 10):
+        super().__init__()
+
+        self.extractor = nn.Sequential(
+            # stage 1
+            nn.Conv2d(in_channels = in_channels, out_channels = 64, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 2
+            nn.Conv2d(in_channels = 64, out_channels = 128, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 3
+            nn.Conv2d(in_channels = 128, out_channels = 256, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 256, out_channels = 256, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 4
+            nn.Conv2d(in_channels = 256, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage5
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2))
+
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 1 * 1, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, num_classes))
+
+    def forward(self, inputs):
+        hidden = self.extractor(inputs)
+        outputs = self.classifier(hidden.view(-1, 512 * 1 * 1))
+        return outputs
+
+
+class VGG_BN(nn.Module):
+    def __init__(self, in_channels = 3, num_classes = 10):
+        super().__init__()
+
+        self.extractor = nn.Sequential(
+            # stage 1
+            nn.Conv2d(in_channels = in_channels, out_channels = 64, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 2
+            nn.Conv2d(in_channels = 64, out_channels = 128, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 3
+            nn.Conv2d(in_channels = 128, out_channels = 256, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 256, out_channels = 256, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage 4
+            nn.Conv2d(in_channels = 256, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2),
+
+            # stage5
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Conv2d(in_channels = 512, out_channels = 512, 
+                      kernel_size = 3, padding = 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 2, stride = 2))
+
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 1 * 1, 512),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Linear(512, num_classes))
+
+    def forward(self, inputs):
+        hidden = self.extractor(inputs)
+        outputs = self.classifier(hidden.view(-1, 512 * 1 * 1))
+        return outputs
+\end{lstlisting}
 	
 \end{document}
