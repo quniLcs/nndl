@@ -391,14 +391,16 @@ class NN_BN(nn.Module):
 \end{lstlisting}
 
 实验结果如图\ref{fig:BN}和表\ref{table:BN}所示，
-另可视化Loss Landscape如图\ref{fig:LL}所示。
+另可视化Loss Landscape如图\ref{fig:NNLL}所示。
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]
 {Result/NN BN 0.0005/figure.png}
 \caption{Loss Landscape}
-\label{fig:LL}
+\label{fig:NNLL}
 \end{figure}
+
+可以看到，批归一化很好地提升了模型的效果。
 
 \section{VGG网络}
 
@@ -534,4 +536,39 @@ class VGG_BN(nn.Module):
         return outputs
 \end{lstlisting}
 	
+实验结果如图\ref{fig:VGG}和表\ref{table:VGG}所示，
+另可视化Loss Landscape如图\ref{fig:VGGLL}所示。
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|} 
+\hline
+批归一化 & 训练集最优错误率 & 回合 & 测试集最优错误率 & 回合 \\
+\hline
+否 & 0.02462 & 19 & 0.25190 & 20 \\
+是 & 0.01004 & 20 & 0.17030 & 16 \\
+\hline
+\end{tabular}
+\caption{VGG网络实验结果}
+\label{table:VGG}
+\end{table}
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]
+{Result/VGG BN 0.001/figure.png}
+\caption{VGG网络实验结果}
+\label{fig:VGG}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]
+{Result/VGG BN 0.0005/figure.png}
+\caption{Loss Landscape}
+\label{fig:VGGLL}
+\end{figure}
+
+可以看到，
+虽然使用批归一化对训练集最优错误率的提升很有限，
+它很好地提升了测试集最优错误率，并加快了收敛速度。
+
 \end{document}
