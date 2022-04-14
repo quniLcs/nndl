@@ -18,7 +18,7 @@ def set_random_seeds(seed = 0, device = 'cpu'):
 def get_num_parameters(model):
     num_parameters = 0
     for parameter in model.parameters():
-        num_parameters += np.prod(parameter.shape)
+        num_parameters += torch.prod(parameter.shape)
     return num_parameters
 
 
@@ -46,6 +46,33 @@ def optimize_loss(model, optimizer, criterion, train_loader, device, wrap_tqdms,
         optimizer.step()
 
     return losses
+
+
+def optimize_plus(model, optimizer, criterion, train_loader, device, wrap_tqdms, ind_epoch, num_epochs):
+    model.train()
+    outputs = []
+    grads = []
+
+    for inputs, labels in wrap_tqdm(train_loader, wrap_tqdms, ind_epoch, num_epochs):
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        output = model(inputs)
+
+        loss = criterion(output, labels)
+
+        exponent = torch.exp(output - torch.max(output, dim = 1).values.view(-1, 1))
+        grad = exponent / torch.sum(exponent, dim = 1).view(-1, 1)
+        for ind_sample in range(len(labels)):
+            grad[ind_sample, labels[ind_sample]] -= 1
+
+        outputs.append(output)
+        grads.append(grad)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    return outputs, grads
 
 
 def eval_error(model, data_loader, device, wrap_tqdms, ind_epoch, num_epochs):
@@ -105,6 +132,52 @@ def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 2
         torch.save(test_errors, test_errors_file)
 
     return losses, train_errors, test_errors
+
+
+def train_plus(model, optimizer, criterion, train_loader, test_loader, num_epochs = 20, device = 'cpu',
+               wrap_tqdms = False, print_errors = False,
+               best_model_file = '', outputs_file = '', grads_file = '',
+               train_errors_file = '', test_errors_file = ''):
+    # the understanding of the paper is referred to: https://zhuanlan.zhihu.com/p/66683061
+
+    set_random_seeds(seed = 0, device = device)
+    model.to(device)
+
+    outputs = []
+    grads = []
+    train_errors = []
+    test_errors = []
+    min_test_error = 1
+
+    for ind_epoch in range(num_epochs):
+        output, grad = optimize_plus(model, optimizer, criterion, train_loader, device,
+                                     wrap_tqdms, ind_epoch, num_epochs)
+        outputs.append(output)
+        grads.append(grad)
+
+        train_error = eval_error(model, train_loader, device, wrap_tqdms, ind_epoch, num_epochs)
+        test_error = eval_error(model, test_loader, device, wrap_tqdms, ind_epoch, num_epochs)
+
+        train_errors.append(train_error)
+        test_errors.append(test_error)
+
+        if print_errors:
+            print('Epoch: %2d\tTrain Error: %.5f\tTest Error: %.5f' % (ind_epoch + 1, train_error, test_error))
+
+        if best_model_file and test_error < min_test_error:
+            min_test_error = test_error
+            torch.save(model, best_model_file)
+
+    if outputs_file:
+        torch.save(outputs, outputs_file)
+    if grads_file:
+        torch.save(grads, grads_file)
+    if train_errors_file:
+        torch.save(train_errors, train_errors_file)
+    if test_errors_file:
+        torch.save(test_errors, test_errors_file)
+
+    return outputs, grads, train_errors, test_errors
 
 
 def loss_landscape(losses):
