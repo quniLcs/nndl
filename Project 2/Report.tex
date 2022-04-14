@@ -276,6 +276,8 @@ Adagrad & 0.23366 & 20 & 0.31240 & 18 \\
 \end{table}
 
 可以看到，初始设置的Adam优化器效果最优。
+另外，值得注意的是，Adagrad优化器在第一回合的表现很好，
+但是之后的收敛速度变慢，可能的原因是学习率下降太快。
 
 \subsubsection{批归一化}
 
@@ -391,7 +393,8 @@ class NN_BN(nn.Module):
 \end{lstlisting}
 
 实验结果如图\ref{fig:BN}和表\ref{table:BN}所示，
-另可视化Loss Landscape如图\ref{fig:NNLL}所示。
+使用学习率[1e-3, 2e-3, 1e-4, 5e-4]
+可视化Loss Landscape如图\ref{fig:NNLL}所示。
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]
@@ -537,7 +540,8 @@ class VGG_BN(nn.Module):
 \end{lstlisting}
 	
 实验结果如图\ref{fig:VGG}和表\ref{table:VGG}所示，
-另可视化Loss Landscape如图\ref{fig:VGGLL}所示。
+使用学习率[1e-3, 2e-3, 1e-4, 5e-4]
+可视化Loss Landscape如图\ref{fig:VGGLL}所示。
 
 \begin{table}[h]
 \centering
