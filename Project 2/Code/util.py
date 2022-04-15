@@ -49,30 +49,45 @@ def optimize_loss(model, optimizer, criterion, train_loader, device, wrap_tqdms,
 
 
 def optimize_plus(model, optimizer, criterion, train_loader, device, wrap_tqdms, ind_epoch, num_epochs):
+    # the method to get the parameter is referred to:
+    # https://blog.csdn.net/weixin_44058333/article/details/92691656
+    # the method to get the gradient  is referred to:
+    # https://blog.csdn.net/qq_41554005/article/details/119767740
     model.train()
-    outputs = []
+    parameters = []
     grads = []
 
     for inputs, labels in wrap_tqdm(train_loader, wrap_tqdms, ind_epoch, num_epochs):
         inputs = inputs.to(device)
         labels = labels.to(device)
-        output = model(inputs)
+        outputs = model(inputs)
 
-        loss = criterion(output, labels)
-
-        exponent = torch.exp(output - torch.max(output, dim = 1).values.view(-1, 1))
-        grad = exponent / torch.sum(exponent, dim = 1).view(-1, 1)
-        for ind_sample in range(len(labels)):
-            grad[ind_sample, labels[ind_sample]] -= 1
-
-        outputs.append(output)
-        grads.append(grad)
+        loss = criterion(outputs, labels)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-    return outputs, grads
+        parameter_weight = []
+        parameter_bias = []
+        grad_weight = []
+        grad_bias = []
+
+        for name, parameter_current in model.named_parameters():
+            if name == list(model.state_dict())[-2]:
+                parameter_weight = parameter_current
+                grad_weight = parameter_current.grad
+            elif name == list(model.state_dict())[-1]:
+                parameter_bias = parameter_current
+                grad_bias = parameter_current.grad
+
+        parameter = torch.vstack([torch.transpose(parameter_weight, 0, 1), parameter_bias])
+        parameters.append(parameter)
+
+        grad = torch.vstack((torch.transpose(grad_weight, 0, 1), grad_bias))
+        grads.append(grad)
+
+    return parameters, grads
 
 
 def eval_error(model, data_loader, device, wrap_tqdms, ind_epoch, num_epochs):
@@ -136,23 +151,23 @@ def train(model, optimizer, criterion, train_loader, test_loader, num_epochs = 2
 
 def train_plus(model, optimizer, criterion, train_loader, test_loader, num_epochs = 20, device = 'cpu',
                wrap_tqdms = False, print_errors = False,
-               best_model_file = '', outputs_file = '', grads_file = '',
+               best_model_file = '', parameters_file = '', grads_file = '',
                train_errors_file = '', test_errors_file = ''):
     # the understanding of the paper is referred to: https://zhuanlan.zhihu.com/p/66683061
 
     set_random_seeds(seed = 0, device = device)
     model.to(device)
 
-    outputs = []
+    parameters = []
     grads = []
     train_errors = []
     test_errors = []
     min_test_error = 1
 
     for ind_epoch in range(num_epochs):
-        output, grad = optimize_plus(model, optimizer, criterion, train_loader, device,
-                                     wrap_tqdms, ind_epoch, num_epochs)
-        outputs.append(output)
+        parameter, grad = optimize_plus(model, optimizer, criterion, train_loader, device,
+                                        wrap_tqdms, ind_epoch, num_epochs)
+        parameters.append(parameter)
         grads.append(grad)
 
         train_error = eval_error(model, train_loader, device, wrap_tqdms, ind_epoch, num_epochs)
@@ -168,8 +183,8 @@ def train_plus(model, optimizer, criterion, train_loader, test_loader, num_epoch
             min_test_error = test_error
             torch.save(model, best_model_file)
 
-    if outputs_file:
-        torch.save(outputs, outputs_file)
+    if parameters_file:
+        torch.save(parameters, parameters_file)
     if grads_file:
         torch.save(grads, grads_file)
     if train_errors_file:
@@ -177,22 +192,4 @@ def train_plus(model, optimizer, criterion, train_loader, test_loader, num_epoch
     if test_errors_file:
         torch.save(test_errors, test_errors_file)
 
-    return outputs, grads, train_errors, test_errors
-
-
-def loss_landscape(losses):
-    num_epoch = len(losses[0])
-    num_batch = len(losses[0][0])
-
-    min_curve = [np.inf for _ in range(num_epoch * num_batch)]
-    max_curve = [-np.inf for _ in range(num_epoch * num_batch)]
-
-    for ind in range(len(losses)):
-        for ind_epoch in range(num_epoch):
-            for ind_batch in range(num_batch):
-                if losses[ind][ind_epoch][ind_batch] < min_curve[ind_epoch * num_batch + ind_batch]:
-                    min_curve[ind_epoch * num_batch + ind_batch] = losses[ind][ind_epoch][ind_batch]
-                elif losses[ind][ind_epoch][ind_batch] > max_curve[ind_epoch * num_batch + ind_batch]:
-                    max_curve[ind_epoch * num_batch + ind_batch] = losses[ind][ind_epoch][ind_batch]
-
-    return min_curve, max_curve
+    return parameters, grads, train_errors, test_errors
