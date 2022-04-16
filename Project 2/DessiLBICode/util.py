@@ -1,131 +1,109 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 def str2bool(string):
     return string.lower() == 'true'
 
 
-def evaluate_batch(model, data_loader, device):
-    model.eval()
-    correct = num = correct_t5 = 0
-    for iter, pack in enumerate(data_loader):
-        data, target = pack[0].to(device), pack[1].to(device)
-        logits = model(data)
-        _, pred = logits.max(1)
-        _, pred_t5 = torch.topk(logits, 5, dim=1)
-        correct += pred.eq(target).sum().item()
-        correct_t5 += pred_t5.eq(torch.unsqueeze(target, 1).repeat(1, 5)).sum().item()
-        num += data.shape[0]
-    print('Test Model')
-    print('Correct : ', correct)
-    print('Num : ', num)
-    print('Test ACC : ', correct / num)
-    print('Top 5 ACC : ', correct_t5 / num)
-    torch.cuda.empty_cache()
-    return correct / num
+def init_parameter(model):
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+            nn.init.kaiming_normal_(module.weight)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+        elif isinstance(module, nn.BatchNorm2d) or isinstance(module, nn.BatchNorm1d):
+            nn.init.ones_(module.weight)
+            nn.init.zeros_(module.bias)
 
 
-def evaluate_single(model, data_loader, device):
-    model.eval()
+def descent_lr(lr, optimizer, ind_epoch, interval):
+    lr = lr * (0.1 ** (ind_epoch // interval))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+    print('learning rate:', lr)
+    print()
+
+
+def optimize(model, optimizer, train_loader, lr, ind_epoch, interval, record_iter, device):
+    model.train()
+    print('Training:')
+
     correct = 0
-    for iter, pack in enumerate(data_loader):
-        data, target = pack[0].to(device), pack[1].to(device)
-        logits = model(data)
-        pred = logits.max(1, keepdim=True)[1]
-        if pred.item() == target.item():
-            correct += 1
-    print('Test ACC : ', correct / len(data_loader))
+    count = 0
+    error = []
+
+    descent_lr(lr, optimizer, ind_epoch, interval)
+
+    for ind_iter, data in enumerate(train_loader):
+        inputs = data[0].to(device)
+        targets = data[1].to(device)
+
+        logits = model(inputs)
+        loss = F.nll_loss(logits, targets)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        count += inputs.shape[0]
+        _, pred = logits.max(dim=1)
+        correct += pred.eq(targets).sum().item()
+
+        if (ind_iter + 1) % record_iter == 0:
+            print('epoch:', ind_epoch + 1)
+            print('iteration:', ind_iter + 1)
+            print('number of samples:', count)
+            print('number of correct samples:', correct)
+            print('training accuracy: %.5f' % (correct / count))
+            print()
+
+            error.append(1 - correct / count)
+
+            count = 0
+            correct = 0
+
+    return error
+
+
+def evaluate(model, data_loader, device):
+    model.eval()
+    print('Testing:')
+
+    count = 0
+    correct_t1 = 0
+    correct_t5 = 0
+
+    for _, data in enumerate(data_loader):
+        inputs = data[0].to(device)
+        targets = data[1].to(device)
+
+        logits = model(inputs)
+
+        count += inputs.shape[0]
+        _, pred_t1 = logits.max(dim=1)
+        _, pred_t5 = torch.topk(logits, k=5, dim=1)
+        correct_t1 += pred_t1.eq(targets).sum().item()
+        correct_t5 += pred_t5.eq(torch.unsqueeze(targets, 1).repeat(1, 5)).sum().item()
+
+    print('number of samples:', count)
+    print('number of correct samples:', correct_t1)
+    print('testing accuracy:', correct_t1 / count)
+    print('top 5 testing accuracy:', correct_t5 / count)
+    print()
+
     torch.cuda.empty_cache()
+    return 1 - correct_t1 / count
 
 
-def save_model_and_optimizer(model, optimizer, path):
+def save_status(model, optimizer, path):
     save_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict()}
     torch.save(save_dict, path)
 
 
-def adjust_learning_rate(star_lr, current_s, max_num, optimizer, expo):
-    # this one is used to adjust learning rate, call at the end of epoch
-    for group in optimizer.param_groups:
-        lr_old = group['lr']
-        lr_new = star_lr * (1 - current_s / max_num) ** expo
-        group['lr'] = lr_new
-    if current_s % 100 == 0:
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        print('step :', current_s)
-        print('new_learning_rate:', lr_new)
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-
-
-def assign_lr(lr_new, optimizer):
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr_new
-
-
-def descent_lr_with_warmup(epoch, optimizer, lr_schedule, epoch_schedule):
-    position_list = range(len(lr_schedule))
-    flag = 0
-    for i in range(0, len(epoch_schedule)):
-        if epoch < epoch_schedule[i]:
-            break
-        else:
-            flag = i + 1
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr_schedule[flag]
-    print('***********************************')
-    print('epoch:', epoch)
-    print('learning rate:', lr_schedule[flag])
-    print('***********************************')
-
-
-def descent_lr(lr, epoch, optimizer, interval):
-    lr = lr * (0.1 ** (epoch // interval))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
-    print('***********************************')
-    print('learning rate:', lr)
-    print('***********************************')
-
-
-def load_model_and_optimizer(model, optimizer, path):
-    loaded_dict = torch.load(path)
-    model.load_state_dict(loaded_dict['model'])
-    optimizer.load_state_dict(loaded_dict['optimizer'])
-
-
-def prune_model_slbi(model, optimizer, test_loader, mode, device, layer_name, percent, prune_bias=True, recover=True,
-                     evaluate=True):
-    if mode == 'new_prune':
-        thre = optimizer.cal_thre(percent, layer_name)
-        print('Threshold:', thre)
-        optimizer.prune_layer_2(percent=percent, layer_name=layer_name, prune_bias=True)
-        if evaluate:
-            evaluate_batch(model, test_loader, device)
-        if recover:
-            optimizer.recover()
-
-
-def process_bn(model_dict):
-    bn_list = []
-    for i, key in enumerate(model_dict):
-        if 'bn.weight' in key:
-            bn_list.append(key)
-    for i, name in enumerate(bn_list):
-        new_size = model_dict[name].size()[0]
-        new_running_mean = torch.zeros_like(model_dict[name])
-        new_running_var = torch.zeros_like(model_dict[name])
-        old_size = model_dict[name.replace('weight', 'running_mean')].size()[0]
-        new_running_mean[0:old_size] = model_dict[name.replace('weight', 'running_mean')]
-        new_running_var[0:old_size] = model_dict[name.replace('weight', 'running_var')]
-        model_dict[name.replace('weight', 'running_mean')] = new_running_mean
-        model_dict[name.replace('weight', 'running_var')] = new_running_var
-
-
-def enlarge_weights_slbi(model, optimizer, test_loader, device, layer_name, enlarge_coefficien, percent,
-                         enlarge_bias=True, recover=True, evaluate=True):
-    thre = optimizer.cal_thre(percent, layer_name)
-    print('Threshold:', thre)
-    optimizer.enlarge_weak_filters(enlarge_coefficien, percent, layer_name, enlarge_bias)
-    if evaluate:
-        evaluate_batch(model, test_loader, device)
-    if recover:
-        optimizer.recover()
+def load_status(model, optimizer, path):
+    load_dict = torch.load(path)
+    model.load_state_dict(load_dict['model'])
+    optimizer.load_state_dict(load_dict['optimizer'])
