@@ -541,7 +541,9 @@ class VGG_BN(nn.Module):
 	
 实验结果如图\ref{fig:VGG}和表\ref{table:VGG}所示，
 使用学习率[1e-3, 2e-3, 1e-4, 5e-4]
-可视化Loss Landscape如图\ref{fig:VGGLL}所示。
+可视化Loss Landscape如图\ref{fig:VGGLL}所示、
+梯度预测性能如图\ref{fig:VGGGP}所示、
+$\beta$ Smoothness如图\ref{fig:VGGBS}所示。
 
 \begin{table}[h]
 \centering
@@ -571,8 +573,49 @@ class VGG_BN(nn.Module):
 \label{fig:VGGLL}
 \end{figure}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]
+{Result/Gradient Predictiveness.png}
+\caption{梯度预测性能}
+\label{fig:VGGGP}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]
+{Result/Beta Smoothness.png}
+\caption{$\beta$ Smoothness}
+\label{fig:VGGBS}
+\end{figure}
+
 可以看到，
 虽然使用批归一化对训练集最优错误率的提升很有限，
 它很好地提升了测试集最优错误率，并加快了收敛速度。
+
+\section{DessiLBI算法}
+
+本节基于DessiLBI算法和LeNet网络，
+加入MSRA初始化，
+在MNIST数据集上训练并测试，
+并使用Adam优化器调整变量的更新。
+实验结果如图\ref{fig:DessiLBItrain}
+和图\ref{fig:DessiLBItest}所示，
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]
+{Result/DessiLBI LeNet Adam/figure.png}
+\caption{训练集实验结果}
+\label{fig:DessiLBItrain}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]
+{Result/DessiLBI LeNet original/figure.png}
+\caption{测试集实验结果}
+\label{fig:DessiLBItest}
+\end{figure}
+
+可以看到，使用Adam优化器对模型有微弱的改进。
 
 \end{document}
