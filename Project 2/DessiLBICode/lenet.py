@@ -17,5 +17,5 @@ class LeNet(nn.Module):
 		hiddens = F.relu(self.conv3(hiddens))
 		hiddens = hiddens.view(-1, 120)
 		hiddens = F.relu(self.fc1(hiddens))
-		hiddens = self.fc2(hiddens)
-		return F.log_softmax(hiddens)
+		outputs = self.fc2(hiddens)
+		return outputs

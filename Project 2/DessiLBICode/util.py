@@ -41,7 +41,8 @@ def optimize(model, optimizer, train_loader, lr, ind_epoch, interval, record_ite
         inputs = data[0].to(device)
         targets = data[1].to(device)
 
-        logits = model(inputs)
+        outputs = model(inputs)
+        logits = F.log_softmax(outputs)
         loss = F.nll_loss(logits, targets)
 
         optimizer.zero_grad()
@@ -49,7 +50,7 @@ def optimize(model, optimizer, train_loader, lr, ind_epoch, interval, record_ite
         optimizer.step()
 
         count += inputs.shape[0]
-        _, pred = logits.max(dim=1)
+        _, pred = logits.max(dim = 1)
         correct += pred.eq(targets).sum().item()
 
         if (ind_iter + 1) % record_iter == 0:
