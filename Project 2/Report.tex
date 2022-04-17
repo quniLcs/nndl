@@ -559,21 +559,21 @@ $\beta$ Smoothness如图\ref{fig:VGGBS}所示。
 \label{table:VGG}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[p]
 \includegraphics[width=\textwidth]
 {Result/VGG BN 0.001/figure.png}
 \caption{VGG网络实验结果}
 \label{fig:VGG}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[p]
 \includegraphics[width=\textwidth]
 {Result/VGG BN 0.0005/figure.png}
 \caption{Loss Landscape}
 \label{fig:VGGLL}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]
 {Result/Gradient Predictiveness.png}
@@ -581,7 +581,7 @@ $\beta$ Smoothness如图\ref{fig:VGGBS}所示。
 \label{fig:VGGGP}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[p]
 \centering
 \includegraphics[width=0.95\textwidth]
 {Result/Beta Smoothness.png}
@@ -595,29 +595,46 @@ $\beta$ Smoothness如图\ref{fig:VGGBS}所示。
 
 \section{DessiLBI算法}
 
-本节基于DessiLBI算法和LeNet网络，
-加入MSRA初始化，
-在MNIST数据集上训练并测试，
-并使用Adam优化器调整变量的更新。
-实验结果如图\ref{fig:DessiLBItrain}
-和图\ref{fig:DessiLBItest}所示，
-其中不使用Adam优化器的模型的测试集最优错误率是0.0090，
-使用Adam优化器的模型的测试集最优错误率是0.0086。
+本节基于DessiLBI算法和MSRA初始化，
+使用Adam优化器调整变量的更新，
+在MNIST数据集上训练并测试LeNet网络，
+在CIFAR-10数据集上训练并测试上一节中的带有批归一化的VGG网络。
+实验结果如表\ref{table:DessiLBI}、
+图\ref{fig:DessiLBILeNet}
+和图\ref{fig:DessiLBIVGG}所示。
 
-\begin{figure}[h]
-\includegraphics[width=\textwidth]
-{Result/DessiLBI LeNet Adam/figure.png}
-\caption{训练集实验结果}
-\label{fig:DessiLBItrain}
-\end{figure}
-
-\begin{figure}[h]
-\includegraphics[width=\textwidth]
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.99\textwidth]
 {Result/DessiLBI LeNet original/figure.png}
-\caption{测试集实验结果}
-\label{fig:DessiLBItest}
+\caption{MNIST数据集和LeNet网络的测试集实验结果}
+\label{fig:DessiLBILeNet}
 \end{figure}
 
-可以看到，使用Adam优化器对模型有微弱的改进。
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.99\textwidth]
+{Result/DessiLBI VGG original/figure.png}
+\caption{CIFAR-10数据集和VGG网络的测试集实验结果}
+\label{fig:DessiLBIVGG}
+\end{figure}
+
+\begin{table}[p]
+\centering
+\begin{tabular}{|l|l|l|l|} 
+\hline
+数据集 & 网络结构 & Adam & 测试集最优错误率 \\
+\hline
+MNIST & LeNet & 否 & 0.0090 \\
+MNIST & LeNet & 是 & 0.0086 \\
+CIFAR-10 & VGG & 否 & 0.1458 \\
+CIFAR-10 & VGG & 是 & 0.1586 \\
+\hline
+\end{tabular}
+\caption{DessiLBI算法实验结果}
+\label{table:DessiLBI}
+\end{table}
+
+可以看到，使用Adam优化器对模型没有明显的改进。
 
 \end{document}
