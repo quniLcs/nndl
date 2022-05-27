@@ -1,0 +1,153 @@
+\documentclass{article}
+\usepackage[final]{NIPS2016}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+% \usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{natbib}
+
+\title{Neural network final project: Unsupervised Few-Shot Oracle Character Recognition}
+
+\author{
+  Yiqun Wang \\
+  School of Data Science \\
+  Fudan University \\
+  Shanghai, 200433 \\
+  \texttt{yiqunwang19@fudan.edu.cn} \\
+  \And
+  Zichen Cheng \\
+  Fudan University \\
+  School of Data Science \\
+  Shanghai, 200433 \\
+  \texttt{zichencheng19@fudan.edu.cn} \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+To-Do.
+\end{abstract}
+
+\section{Introduction}
+
+Oracle characters are the earliest known hieroglyphs in China, which were carved on animal bones or turtle plastrons in purpose of pyromantic divination of weather, state power, warfare and trading to mitigate uncertainty in the Shang dynasty \citep{Oracle}. Oracle characters are important for modern archaeology, history, Chinese etymology and calligraphy study. \citep{Hierachical, Neighbor}
+
+In the past decades, although identification and decipherment for oracle characters have made huge strides, there is still a long way to fully understand the whole writing system. 
+So far, more than 150,000 animal bones and turtle shells had been excavated, including approximately 4,500 unique oracle characters, but only about 2,000 of them have been successfully deciphered \citep{OBC306}.
+2 main reasons are as follows:
+
+Due to the scarcity of oracle bones and the long-tail problem in the usage of characters as shown in Fig. \ref{fig:distribution}, oracle character recognition suffers from the problem of data limitation and imbalance, thus is a natural few-shot learning problem, which is topical in computer vision and machine learning communities recently. 
+
+Besides, as is shown in Fig. \ref{fig:stroke}, there is a high degree of intra-class variance in the shapes of oracle characters, resulting from the fact that oracle bones were carved by different ancient people in various regions over tens of hundreds of years. As a result, oracle character recognition is a challenging task.
+
+In this paper, we intend to address the problem of oracle character recognition under self-supervision and few-shot settings. More specifically, we will utilize a large-scale unlabeled source data as well as a few labeled training samples for each category to train our model by transferring knowledge.
+
+\section{Related Work}
+
+SOTA
+
+\citep{Hierachical} discards minority categories
+
+\citep{Neighbor}
+
+\citep{CNN} simple geometric augmentation to too few samples
+
+\citep{Detection}
+
+\citep{Line}
+
+\citep{SSD}
+
+\citep{Sketch-a-Net}
+
+\citep{Sketch-R2CNN}
+
+\citep{TC-Net}
+
+\citep{Unsupervised}
+
+\citep{Self-supervised}
+
+\citep{XLNet}
+
+\citep{MoCo}
+
+\citep{Sketch-Bert}
+
+\citep{Orc-Bert}
+
+\section{Approach}
+
+\section{Experiment}
+
+\subsection{Dataset}
+
+\paragraph{Oracle-50K}
+In this dataset, labeled oracle character samples are collected  from three data sources using different strategies \citep{Orc-Bert}. There are 2668 unique characters and 59081 images in total. Besides, as is shown in Fig. \ref{fig:distribution}, there exists a long-tail distribution of oracle character samples in Oracle-50K. Therefore, oracle character recognition is a natural few-shot learning problem.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.75\linewidth]
+	{../Papers/Distribution.png}
+	\caption{The distribution of oracle character samples in dataset Oracle-50K.}
+	\label{fig:distribution}
+\end{figure}
+
+\paragraph{Oracle-FS}
+Based on Oracle-50K and other collected ancient Chinese character images, \citet{Orc-Bert} created a few-shot oracle character recognition dataset, Oracle-FS, including 276,031 images, under three different few-shot settings. Specifically, under the $k$-shot setting, there are 200 classes, with $k$ training samples and 20 test ones per class, where k can be 1, 3 and 5.
+
+Besides, since the stroke orders of Chinese characters contain a lot of information, for which people can usually recognize a character correctly even if it is incomplete, Oracle-FS includes both pixel and vector format data.
+Although the stroke orders of oracle characters have been lost in history, there are two fundamental facts: 1) oracle writing is ancestral to modern Chinese script; 2) the modern Chinese writing system is in a left-to-right then top-to-bottom writing order, so assuming oracle character writing is in the same order and using existing approximation algorithm \citep{Handwriting}, character images in pixel format can be converted to data in vector format.  
+Nevertheless, due to 3 failure cases during approximation algorithm, the number of source samples in vector format are 276,028.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.75\linewidth]
+	{../Papers/Stroke.png}
+	\caption{Examples of oracle character images and corresponding stroke data.}
+	\label{fig:stroke}
+\end{figure}
+
+When we show a oracle character in vector form, we use a 5-dimensional vector to show each point:
+\begin{equation*}
+	O = (\Delta x, \Delta y, p_1, p_2, p_3)
+\end{equation*}
+In this form, $ \Delta x, \Delta y $ are continuous values, standing for the position offset between two adjacent points,
+while $ p_1, p_2, p_3 $ are 0 or 1 and sums to 1, 
+where $ p_2 = 1 $ indicates that the point is at the end of a stroke, and $ p_3 = 1 $ indicates that the point is at the end of the whole character.
+
+\subsection{Hyper-parameters}
+
+\subsection{Results}
+
+\section{Conclusion}
+
+accuracy for all 200 classes under all 3 few-shot settings.
+
+\begin{table}[h]
+  \caption{Sample table title}
+  \label{sample-table}
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    Name     & Description     & Size ($\mu$m) \\
+    \midrule
+    Dendrite & Input terminal  & $\sim$100     \\
+    Axon     & Output terminal & $\sim$10      \\
+    Soma     & Cell body       & up to $10^6$  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\bibliographystyle{unsrtnat}
+\bibliography{Report}
+
+\end{document}
