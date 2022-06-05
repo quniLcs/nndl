@@ -81,23 +81,35 @@ It can be fine-tuned and tested on downstream tasks, such as sketch recognition,
 As a sub-domain of sketch data processing, quite a lot of works also have sprung up, however pays less attention to deep neural networks. For example, \cite{Hierachical} propose a novel hierarchical representation that combines a Gabor-related low-level representation and a sparse-encoder-related mid-level representation; \citep{Line} uses the line feature to deal with the task of oracle character recognition; \citep{Neighbor} extract features by a convolutional neural network and perform classification by the Nearest Neighbor algorithm also to deal with the task of oracle character recognition; \citep{Detection} present a unified implementation of the Faster R-CNN, SSD, YOLOv3, RFBnet and RefineDet to deal with the the task of oracle character detection; \citep{SSD} extend Single Shot Multibox Detector also to deal with the the task of oracle character detection. Among them, Orc-BERT is the state-of-the-art model in oracle character recognition and is under similar settings as our work \citep{Orc-BERT}.
 First, Orc-BERT is pre-trained on a large-scale unlabeled dataset under self-supervision settings by predicting the masked from the visible. Then, convolutional neural network based classifier is trained under few-shot learning settings with Orc-BERT as data augmentor.
 
-\paragraph{GL}
+\paragraph{CM}
 % \citep{MoCo}
-Since the oracle character recognition task can be solved either as sequence classification from the perspective of natural language processing (NLP) or image classification from the perspective of computer vision (CV), image inpainting models can also be used as an augmentor. Among all kinds of inpainting models, Globally and Locally Consistent Image Completion (GL) is a typical and relative simple one \citep{GL}, which uses a fully-convolutional neural network, as well as global and local context discriminators 
+Since the oracle character recognition task can be solved either as sequence classification from the perspective of natural language processing (NLP) or image classification from the perspective of computer vision (CV), image inpainting models can also be used as an augmentor. Among all kinds of inpainting models, Globally and Locally Consistent Image Completion (CM) is a typical and relative simple one \citep{CM}, which uses a fully-convolutional neural network, as well as global and local context discriminators 
 
 \section{Approach}
 
-\subsection{Data Augmentation}
+\subsection{Augmentor}
 To increase the volume and diversity of sketches for training, as well as address the challenge of a high degree of intra-class variance in the shapes of sketches, especially under the few-shot settings, data augmentation strategies are quite significant. 
-According to \cite{Sketch-a-Net}, we will not only implement traditional strategies like horizontal and vertical shifts, but also stroke removal and sketch deformation strategies.
+% According to \cite{Sketch-a-Net}, we will not only implement traditional strategies like horizontal and vertical shifts, but also stroke removal and sketch deformation strategies.
 
-\subsubsection{Stroke Removal}
+% \subsubsection{Stroke Removal}
+% \subsubsection{Sketch Deformation}
 
-\subsubsection{Sketch Deformation}
+\subsubsection{Orc-DeBERTa}
+
+% When a sketch is inputted into the Orc-DeBERTa, it is first embedded, then encoded and finally outputs an image.
+
+\paragraph{Embedding}
+In the DeBERTa \citep{Package}, the input includes the word id,  the token type id, the position id and the mask, while in out Orc-DeBERTa, the word id is not included. Instead, we use a fully-connected layer to create the position embedding.
+
+\paragraph{Encoding}
+
+\paragraph{Reconstruction}
+
+\subsubsection{Orc-CM}
 
 \subsection{Classifier}
 
-We use pre-trained ResNet-18 as the classifier \citep{ResNet}.
+We use pre-trained ResNet-18 as the classifier \citep{ResNet}, where the output is the probability of the 200 classes.
 
 \section{Experiment}
 
@@ -132,7 +144,7 @@ Nevertheless, due to 3 failure cases during approximation algorithm, the number 
 \subsection{Data Pre-process}
 
 \paragraph{Pixel Form Image Data}
-In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. To normalize the data, we get all pixel values minus 127 and be divided by 128
+In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. To normalize the data, we get all pixel values to minus 127 and be divided by 128.
 
 \paragraph{Vector Form Sketch Data}
 First, the vector form sketch data in equation \ref{equ:vec} is simplified into:
@@ -149,8 +161,7 @@ In Oracle-FS dataset, it satisfies:
 To normalize the data, we get:
 \begin{equation*}
 	\tilde{O} = 
-	(\frac{\Delta x}{49}, \frac{\Delta y}{49}, 
-	p_2 + p_3 - \frac{1}{2}) 
+	(\frac{\Delta x}{49}, \frac{\Delta y}{49},	p_2 + p_3) 
 \end{equation*} 
 
 \subsection{Hyper-parameters}
