@@ -20,11 +20,11 @@ if __name__ == '__main__':
     parser.add_argument("--num_epoch", default = 200, type = int)
     parser.add_argument("--batch_size", default = 8, type = int)
     parser.add_argument("--num_workers", default = 4, type = int)
-    parser.add_argument("--mode", default = 'train', type = str)         # pretrain, train
-    parser.add_argument("--form", default = 'img', type = str)           # img, seq
+    parser.add_argument("--mode", default = 'train', type = str)          # pretrain, train
+    parser.add_argument("--form", default = 'img', type = str)            # img, seq
     parser.add_argument("--augment", default = False, type = str_to_bool) # True, False
-    parser.add_argument("--shot", default = 1, type = int)               # 1, 3, 5
-    parser.add_argument("--lr", default = 0.0001, type = float)          # 0.001, 0.0001
+    parser.add_argument("--shot", default = 1, type = int)                # 1, 3, 5
+    parser.add_argument("--lr", default = 0.0001, type = float)           # 0.001, 0.0001
     args = parser.parse_args()
 
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,6 +34,10 @@ if __name__ == '__main__':
     assert args.mode in ('pretrain', 'train')
     assert args.form in ('img', 'seq')
     assert args.shot in (1, 3, 5)
+
+    results = 'results'
+    if not os.path.exists(results):
+        os.makedirs(results)
 
     runs = 'runs/%s_%s' % (args.mode, args.file)
     if not os.path.exists(runs):

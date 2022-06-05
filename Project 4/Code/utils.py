@@ -71,13 +71,11 @@ def train(classifier, augmentor, train_loader, train_img_loader, test_img_loader
         train_acc_t1, train_acc_t5, train_loss = evaluate(classifier, train_img_loader, args.device)
         test_acc_t1, test_acc_t5, test_loss = evaluate(classifier, test_img_loader, args.device)
 
+        save_status(classifier, 'results/classifier_%s_%d.pth' % (args.file, ind_epoch + 1))
+
         writer.add_scalars('top1', {'train': train_acc_t1, 'test': test_acc_t1}, ind_epoch)
         writer.add_scalars('top5', {'train': train_acc_t5, 'test': test_acc_t5}, ind_epoch)
         writer.add_scalars('loss', {'train': train_loss, 'test': test_loss}, ind_epoch)
 
         logger.info('%3d\t%.5f\t\t%.5f\t\t%.5f\t\t%.5f' %
                     (ind_epoch + 1, train_acc_t1, train_acc_t5, test_acc_t1, test_acc_t5))
-
-    logger.info('Saving model...')
-    save_status(classifier, 'classifier_%s.pth' % args.file)
-    logger.info('Finish model saving.')
