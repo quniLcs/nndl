@@ -23,18 +23,23 @@ def strokes_to_lines(strokes):
     return lines
 
 
-def show_one_sample(sample):
+def show_one_sample(sample, file = None):
     lines = strokes_to_lines(sample)
 
+    plt.figure(figsize = (50, 50), dpi = 1)
     for i in range(len(lines)):
         x = [line[0] for line in lines[i]]
         y = [line[1] for line in lines[i]]
-        plt.plot(x, y, 'k')
+        plt.plot(x, y, 'k', linewidth = 100)
 
     plt.xticks([])
     plt.yticks([])
     plt.gca().invert_yaxis()
-    plt.show()
+
+    if file:
+        plt.savefig(file, bbox_inches = 'tight', pad_inches = 0)
+    else:
+        plt.show()
 
 
 def img_preprocesser(sample):
@@ -50,16 +55,16 @@ def pretrain_img_dataset_builder():
 
     path = '../Data/img/oracle_source_img'
     sub_path = 'bnu_xxt_hard'
-    cur_path = os.path.join(path, sub_path)
-    for sample in os.listdir(cur_path):
-        dataset.append({'img': 1 - read_image(os.path.join(cur_path, sample)) / 255})
+    cur_sub_path = os.path.join(path, sub_path)
+    for sample in os.listdir(cur_sub_path):
+        dataset.append({'img': img_preprocesser(read_image(os.path.join(cur_sub_path, sample)))})
 
     for sub_path in ('gbk_bronze_lst_seal', 'oracle_54081', 'other_font'):
         cur_path = os.path.join(path, sub_path)
-        for character in os.listdir(cur_path):
-            cur_sub_path = os.path.join(cur_path, character)
+        for idx in os.listdir(cur_path):
+            cur_sub_path = os.path.join(cur_path, idx)
             for sample in os.listdir(cur_sub_path):
-                dataset.append({'img': img_preprocesser(read_image(os.path.join(cur_sub_path, sample)))})
+                dataset.append(img_preprocesser(read_image(os.path.join(cur_sub_path, sample))))
 
     return dataset
 
@@ -70,8 +75,12 @@ def pretrain_seq_dataset_builder():
     path = '../Data/seq/oracle_source_seq/oracle_source_seq.npz'
     data = np.load(path, allow_pickle = True)
     for sub_mode in ('train', 'test'):
+        cur_sub_path = os.path.join('../Data/draw/', sub_mode)
+        idx = 0
         for sample in data[sub_mode]:
-            dataset.append({'seq': torch.from_numpy(seq_preprocesser(sample))})
+            dataset.append((torch.from_numpy(seq_preprocesser(sample)),
+                            img_preprocesser(read_image(os.path.join(cur_sub_path, '%d.jpg' % idx)))))
+            idx += 1
 
     return dataset
 
@@ -79,16 +88,11 @@ def pretrain_seq_dataset_builder():
 def train_test_img_dataset_builder(mode = 'train', shot = 1):
     dataset = []
 
-    path = '../Data/img/char_to_idx.txt'
-    with open(path, 'r', encoding = 'utf-8') as file:
-        char_to_idx = file.read()
-
     path = '../Data/img/oracle_200_%d_shot/%s' % (shot, mode)
-    for character in os.listdir(path):
-        cur_sub_path = os.path.join(path, character)
+    for idx in range(200):
+        cur_sub_path = os.path.join(path, '%d' % idx)
         for sample in os.listdir(cur_sub_path):
-            dataset.append({'img': img_preprocesser(read_image(os.path.join(cur_sub_path, sample))),
-                            'char': character, 'idx': char_to_idx.index(character)})
+            dataset.append((img_preprocesser(read_image(os.path.join(cur_sub_path, sample))), idx))
 
     return dataset
 
@@ -96,16 +100,11 @@ def train_test_img_dataset_builder(mode = 'train', shot = 1):
 def train_test_seq_dataset_builder(mode = 'train', shot = 1):
     dataset = []
 
-    path = '../Data/seq/char_to_idx.txt'
-    with open(path, 'r', encoding='utf-8') as file:
-        char_to_idx = file.read()
-
     path = '../Data/seq/oracle_200_%d_shot' % shot
     for idx in range(200):
         data = np.load(os.path.join(path, '%d.npz' % idx), allow_pickle = True)
         for sample in data[mode]:
-            dataset.append({'seq': torch.from_numpy(seq_preprocesser(sample)),
-                            'char': char_to_idx[idx], 'idx': idx})
+            dataset.append((torch.from_numpy(seq_preprocesser(sample)), idx))
 
     return dataset
 
@@ -115,6 +114,7 @@ class OracleDataset(Dataset):
         assert form in ('img', 'seq')
         assert mode in ('pre-train', 'train', 'test')
         assert shot in (1, 3, 5)
+        self.mode = mode
         self.form = form
 
         if mode == 'pre-train':
@@ -133,8 +133,7 @@ class OracleDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        return self.dataset[idx][self.form], self.dataset[idx]['idx']
-
+        return self.dataset[idx]
 
 def data_loader_builder(args, mode, form, shuffle):
     dataset = OracleDataset(mode = mode, form = form, shot = args.shot)
@@ -146,7 +145,7 @@ def data_loader_builder(args, mode, form, shuffle):
 
 
 if __name__ == "__main__":
-    path = '../Data/oracle_source/oracle_source_seq/oracle_source_seq.npz'
+    path = '../Data/seq/oracle_source_seq/oracle_source_seq.npz'
     data = np.load(path, allow_pickle = True)
 
     data_train = data['train']
