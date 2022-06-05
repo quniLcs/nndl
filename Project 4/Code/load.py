@@ -47,7 +47,7 @@ def img_preprocesser(sample):
 
 
 def seq_preprocesser(sample):
-    return np.stack((sample[:, 0] / 49, sample[:, 1] / 49, sample[:, 2] - 0.5), axis = 1)
+    return np.stack((sample[:, 0] / 49, sample[:, 1] / 49, sample[:, 2]), axis = 1)
 
 
 def pretrain_img_dataset_builder():
