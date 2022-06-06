@@ -1,10 +1,10 @@
 import os
+from tqdm import tqdm
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision.io import read_image
 import matplotlib.pyplot as plt
-
 
 def strokes_to_lines(strokes):
     x = 0
@@ -83,7 +83,7 @@ def pretrain_seq_dataset_builder():
     for sub_mode in ('train', 'test'):
         cur_sub_path = os.path.join('../Data/draw/', sub_mode)
         idx = 0
-        for sample in data[sub_mode]:
+        for sample in tqdm(data[sub_mode][:200]):
             dataset.append((torch.from_numpy(seq_preprocesser(sample)),
                             img_preprocesser(read_image(os.path.join(cur_sub_path, '%d.jpg' % idx)))))
             idx += 1
