@@ -53,6 +53,7 @@ Besides, as is shown in Fig. \ref{fig:stroke}, there is a high degree of intra-c
 In this paper, we intend to address the problem of oracle character recognition under self-supervision and few-shot settings. More specifically, we will utilize a large-scale unlabeled source data as well as a few labeled training samples for each category to train our model by transferring knowledge.
 
 \section{Related Works}
+\label{sec:related}
 
 \paragraph{Vector form sketch data}
 Unlike MNIST handwritten digit database \citep{MNIST}, which is in pixel form, oracle data or sketch data are always processed  in vector form \citep{Sketch-BERT}, where we use a 5-dimensional vector to show each point in a sketch:
@@ -87,6 +88,15 @@ Since the oracle character recognition task can be solved either as sequence cla
 
 \section{Approach}
 
+Our model contains 2 parts: augmentor and classifier. When we use Orc-DeBERTa as our augmentor, we can input a masked sketch data and get an augmented image; while when we use Orc-CM as our augmentor, we can input a masked image data and also get an augmented image. Then we can input the augmented data into the classifier, which is based on a pre-trained ResNet-18. The whole structure of our model is shown in figure \ref{fig:whole}.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.75\linewidth]{../Graph/whole.png}
+	\caption{The whole structure of our model.}
+	\label{fig:whole}
+\end{figure}
+
 \subsection{Augmentor}
 To increase the volume and diversity of sketches for training, as well as address the challenge of a high degree of intra-class variance in the shapes of sketches, especially under the few-shot settings, data augmentation strategies are quite significant. 
 % According to \cite{Sketch-a-Net}, we will not only implement traditional strategies like horizontal and vertical shifts, but also stroke removal and sketch deformation strategies.
@@ -96,14 +106,52 @@ To increase the volume and diversity of sketches for training, as well as addres
 
 \subsubsection{Orc-DeBERTa}
 
-% When a sketch is inputted into the Orc-DeBERTa, it is first embedded, then encoded and finally outputs an image.
+When a sketch is inputted into the Orc-DeBERTa, it is first embedded, then encoded and finally outputs an image.
 
 \paragraph{Embedding}
-In the DeBERTa \citep{Package}, the input includes the word id,  the token type id, the position id and the mask, while in out Orc-DeBERTa, the word id is not included. Instead, we use a fully-connected layer to create the position embedding.
+In the DeBERTa \citep{Package}, the input includes the word ID,  the token type ID, the position ID and the mask, while in our Orc-DeBERTa, the word ID is not included. Instead, we use a fully-connected network to create the embedding from the vector from sketch data.
 
 \paragraph{Encoding}
+As is mentioned in section \ref{sec:related}, DeBERTa inputs content embedding and position embedding respectively.
+More specifically, we denote $ H_i \in R^d $ as the content embedding for a token at position $ i $, and $ P_{i|j} \in R^d  $ as the position embedding to represent the relative position for the token at position $ i $ with the token at position $ j $. 
+Then the cross attention score is:
+\begin{align*}
+	A_{i,j} 
+	&= (H_i, P_{i|j}) \cdot (H_j, P_{j|i})^T \\
+	&= H_i H_j^T + H_i P_{j|i}^T 
+	+ H_j P_{i|j}^T + P_{i|j} P_{j|i}^T
+\end{align*}
+where the 4 terms stand for content-to-content, content-to-position, position-to-content as well as position-to-position respectively, and the last term can be removed since it doesn't provide much additional information.
+To put all $ P_{i|j} $ into a matrix $ P $, we denote $ k $ as the maximum relative distance, and $ \delta (i,j) \in \left[ 0, 2k \right) $ as the relative distance from the token at position $ i $ to the token at position $ j $, where
+\begin{equation*}
+	\delta (i,j) = 
+	\left\{
+	\begin{array}{ll}
+		0 & i - j \leq k\\
+		2k-1 & i - j \geq k \\
+		i-j+k & |i - j| < k \\
+	\end{array}
+	\right.
+\end{equation*}
+Then the cross attention score is:
+\begin{align*}
+	\tilde{A_{i,j}}
+	&= Q^c_i {K^c_j}^T 
+	+ Q^c_i {K^r_{\delta (i,j)}}^T 
+	+ K^c_j {Q^r_{\delta (j,i)}}^T
+\end{align*}
+where
+\begin{align*}
+	Q^c &= H W_{q,c} & K^c &= H W_{k,c} \\
+	Q^r &= P W_{q,r} & K^r &= P W_{k,r} 
+\end{align*}
+are projected matrices and $ W_{q,c} \ W_{k,c} \ W_{q,r} \ W_{k,r}$ are projection matrices.
+Finally, the output of self-attention operation is
+$ H_o = softmax(\frac{\tilde{A}}{\sqrt{3d}}) V^c $
+where $ V^c = H W_{v,c} $.
 
 \paragraph{Reconstruction}
+After encoding, we use a fully-connected network to further reconstruct the information and output an image.
 
 \subsubsection{Orc-CM}
 
@@ -144,7 +192,7 @@ Nevertheless, due to 3 failure cases during approximation algorithm, the number 
 \subsection{Data Pre-process}
 
 \paragraph{Pixel Form Image Data}
-In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. To normalize the data, we get all pixel values to minus 127 and be divided by 128.
+In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. Since pixel value 255 means the white background, we get all pixel values be divided by 256 and be minus by 1.
 
 \paragraph{Vector Form Sketch Data}
 First, the vector form sketch data in equation \ref{equ:vec} is simplified into:
@@ -163,6 +211,7 @@ To normalize the data, we get:
 	\tilde{O} = 
 	(\frac{\Delta x}{49}, \frac{\Delta y}{49},	p_2 + p_3) 
 \end{equation*} 
+Finally, to get same length for all sketch data, we pad them with $(0, 0, 2)$.
 
 \subsection{Hyper-parameters}
 
@@ -174,7 +223,22 @@ As for the mask probability, as what Orc-BERT did, during pre-training, the prob
 
 \subsection{Results}
 
-accuracy for all 200 classes under all 3 few-shot settings.
+Our results are shown in table \ref{tab:results}.
+
+\begin{table}[h]
+	\centering
+	\caption{The results of our experiments}
+	\begin{tabular}{cccc}
+		\toprule
+		Setting & No DA & Orc-DeBERTa & Orc-CM \\
+		\midrule
+		1-shot & 0.40100 &  &  \\
+		3-shot & 0.65675 &  &  \\
+		5-shot & 0.76375 &  &  \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:results}
+\end{table}
 
 \section{Conclusion}
 
