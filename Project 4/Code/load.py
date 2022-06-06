@@ -46,8 +46,14 @@ def img_preprocesser(sample):
     return (sample - 127) / 128
 
 
-def seq_preprocesser(sample):
-    return np.stack((sample[:, 0] / 49, sample[:, 1] / 49, sample[:, 2]), axis = 1)
+def seq_preprocesser(before):
+    length = min(before.shape[0], 300)
+    after = np.zeros((300, 3))
+    after[:length, :] = np.stack((before[:length, 0] / 49,
+                                  before[:length, 1] / 49,
+                                  before[:length, 2]), axis = 1)
+    after[length:, 2] = 2
+    return after
 
 
 def pretrain_img_dataset_builder():
@@ -150,5 +156,8 @@ if __name__ == "__main__":
 
     data_train = data['train']
     data_test = data['test']
+
+    print(len(data_train))
+    print(len(data_test))
 
     show_one_sample(data_train[0])
