@@ -2,7 +2,43 @@ import torch
 from torchvision.transforms import Resize
 
 
-def optimize(classifier, augmentor, train_loader, lr, device):
+def pretrain_optimize(augmentor, train_loader, lr, device):
+    augmentor.train()
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(augmentor.parameters(), lr = lr)
+
+    count = 0
+    losses = 0
+
+    for inputs, targets in train_loader:
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
+        mask = torch.rand(inputs.shape[0], 300).to(device)
+        mask = (mask > 0.15) * 1
+
+        outputs = augmentor(inputs, mask)
+        loss = criterion(outputs, targets)
+        print(outputs)
+        print(targets)
+        print(loss)
+        print()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        count += inputs.shape[0]
+        losses += loss.item() * inputs.shape[0]
+
+        for parameter in augmentor.parameters():
+            print(parameter)
+        break
+
+    return losses / count
+
+
+def train_optimize(classifier, augmentor, train_loader, lr, device):
     classifier.train()
     resizer = Resize((224, 224))
     criterion = torch.nn.CrossEntropyLoss()
@@ -13,9 +49,11 @@ def optimize(classifier, augmentor, train_loader, lr, device):
         targets = targets.to(device)
 
         if augmentor:
-            inputs = augmentor(inputs)
-        inputs = resizer(inputs)
-        inputs = inputs.repeat(1, 3, 1, 1)
+            prob = torch.randint(high = 80, size = (1, )) / 200 + 0.1
+            mask = torch.rand(inputs.shape[0], 300).to(device)
+            mask = (mask > prob) * 1
+            inputs = augmentor(inputs, mask).reshape((inputs.shape[0], 1, 50, 50))
+        inputs = resizer(inputs).repeat(1, 3, 1, 1)
         outputs = classifier(inputs)
         loss = criterion(outputs, targets)
 
@@ -24,7 +62,7 @@ def optimize(classifier, augmentor, train_loader, lr, device):
         optimizer.step()
 
 
-def evaluate(classifier, data_loader, device):
+def train_evaluate(classifier, data_loader, device):
     classifier.eval()
     resizer = Resize((224, 224))
     criterion = torch.nn.CrossEntropyLoss()
@@ -63,15 +101,32 @@ def load_status(model, path):
     model.load_state_dict(load_dict)
 
 
+def pretrain(augmentor, train_loader, writer, logger, args):
+    logger.info('Epoch\tTrain loss')
+
+    for ind_epoch in range(args.num_epoch):
+        loss = pretrain_optimize(augmentor, train_loader, args.lr, args.device)
+        writer.add_scalar('loss', loss, ind_epoch)
+        logger.info('%3d\t%.5f' % (ind_epoch + 1, loss))
+
+    save_status(augmentor, 'results/augmentor_%s_%d.pth' % (args.file, args.num_epoch))
+
+
 def train(classifier, augmentor, train_loader, train_img_loader, test_img_loader, writer, logger, args):
     logger.info('Epoch\tTrain top1\tTrain top5\tTest top1\tTest top5\t')
+    best_test_acc_t1 = 0
+    best_test_acc_t1_epoch = 0
+
     for ind_epoch in range(args.num_epoch):
-        optimize(classifier, augmentor, train_loader, args.lr, args.device)
+        train_optimize(classifier, augmentor, train_loader, args.lr, args.device)
 
-        train_acc_t1, train_acc_t5, train_loss = evaluate(classifier, train_img_loader, args.device)
-        test_acc_t1, test_acc_t5, test_loss = evaluate(classifier, test_img_loader, args.device)
+        train_acc_t1, train_acc_t5, train_loss = train_evaluate(classifier, train_img_loader, args.device)
+        test_acc_t1, test_acc_t5, test_loss = train_evaluate(classifier, test_img_loader, args.device)
 
-        save_status(classifier, 'results/classifier_%s_%d.pth' % (args.file, ind_epoch + 1))
+        if test_acc_t1 > best_test_acc_t1:
+            best_test_acc_t1 = test_acc_t1
+            best_test_acc_t1_epoch = ind_epoch + 1
+            save_status(classifier, 'results/classifier_%s_%d.pth' % (args.file, ind_epoch + 1))
 
         writer.add_scalars('top1', {'train': train_acc_t1, 'test': test_acc_t1}, ind_epoch)
         writer.add_scalars('top5', {'train': train_acc_t5, 'test': test_acc_t5}, ind_epoch)
@@ -79,3 +134,5 @@ def train(classifier, augmentor, train_loader, train_img_loader, test_img_loader
 
         logger.info('%3d\t%.5f\t\t%.5f\t\t%.5f\t\t%.5f' %
                     (ind_epoch + 1, train_acc_t1, train_acc_t5, test_acc_t1, test_acc_t5))
+
+    logger.info('Best test top1 accuracy is %.5f at epoch %d' % (best_test_acc_t1, best_test_acc_t1_epoch))
