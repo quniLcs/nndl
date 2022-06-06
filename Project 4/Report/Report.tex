@@ -10,6 +10,7 @@
 \usepackage{microtype}      % microtypography
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{subcaption}
 \usepackage{natbib}
 
 \title{Orc-DeBERTa and Orc-CM: Unsupervised Few-Shot Oracle Character Recognition}
@@ -157,7 +158,23 @@ After encoding, we use a fully-connected network to further reconstruct the info
 
 \subsection{Classifier}
 
-We use pre-trained ResNet-18 as the classifier \citep{ResNet}, where the output is the probability of the 200 classes.
+We use pre-trained ResNet-18 as the classifier \citep{ResNet}, which mainly contains two kinds of unit structures as shown in figure \ref{fig:resnet} and whose output is modified to be the probability of the 200 classes.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]
+		{../Graph/ResNetI.png}
+	\end{subfigure}
+	\begin{subfigure}{0.49\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]
+		{../Graph/ResNetII.png}
+	\end{subfigure}
+	\caption{Two kinds of unit structures in ResNet-18.}
+	\label{fig:resnet}
+\end{figure}
 
 \section{Experiment}
 
