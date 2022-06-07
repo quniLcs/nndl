@@ -90,9 +90,11 @@ def pretrain_seq_dataset_builder(split = 'train'):
     data = np.load(path, allow_pickle = True)
 
     path = os.path.join('../Data/draw/', split)
-    for idx in tqdm(range(len(data[split]))):
-        dataset.append((torch.from_numpy(seq_preprocesser(data[split][idx])),
+    idx = 0
+    for sample in tqdm(data[split]):
+        dataset.append((torch.from_numpy(seq_preprocesser(sample)),
                         img_preprocesser(read_image(os.path.join(path, '%d.jpg' % idx))[0])))
+        idx += 1
 
     return dataset
 
