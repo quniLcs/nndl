@@ -38,6 +38,29 @@ def pretrain_optimize(augmentor, train_loader, lr, device):
     return losses / count
 
 
+def pretrain_evaluate(augmentor, test_loader, device):
+    augmentor.eval()
+    criterion = torch.nn.MSELoss()
+
+    count = 0
+    losses = 0
+
+    for inputs, targets in test_loader:
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
+        mask = torch.rand(inputs.shape[0], 300).to(device)
+        mask = (mask > 0.15) * 1
+
+        outputs = augmentor(inputs, mask)
+        loss = criterion(outputs, targets)
+
+        count += inputs.shape[0]
+        losses += loss.item() * inputs.shape[0]
+
+    return losses / count
+
+
 def train_optimize(classifier, augmentor, train_loader, lr, device):
     classifier.train()
     resizer = Resize((224, 224))
@@ -101,13 +124,14 @@ def load_status(model, path):
     model.load_state_dict(load_dict)
 
 
-def pretrain(augmentor, train_loader, writer, logger, args):
-    logger.info('Epoch\tTrain loss')
+def pretrain(augmentor, train_loader, test_loader, writer, logger, args):
+    logger.info('Epoch\tTrain loss\tTest loss')
 
     for ind_epoch in range(args.num_epoch):
-        loss = pretrain_optimize(augmentor, train_loader, args.lr, args.device)
-        writer.add_scalar('loss', loss, ind_epoch)
-        logger.info('%3d\t%.5f' % (ind_epoch + 1, loss))
+        train_loss = pretrain_optimize(augmentor, train_loader, args.lr, args.device)
+        test_loss = pretrain_evaluate(augmentor, test_loader, args.device)
+        writer.add_scalar('loss', {'train': train_loss, 'test': test_loss}, ind_epoch)
+        logger.info('%3d\t%.5f\t\t%.5f' % (ind_epoch + 1, train_loss, test_loss))
 
     save_status(augmentor, 'results/augmentor_%s_%d.pth' % (args.file, args.num_epoch))
 
