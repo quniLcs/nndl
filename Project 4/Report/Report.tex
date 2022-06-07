@@ -13,7 +13,7 @@
 \usepackage{subcaption}
 \usepackage{natbib}
 
-\title{Orc-DeBERTa and Orc-CM: Unsupervised Few-Shot Oracle Character Recognition}
+\title{Orc-DeBERTa, Orc-MAE and others: Unsupervised Few-Shot Oracle Character Recognition}
 
 \author{
   Yiqun Wang \\
@@ -34,9 +34,9 @@
 \maketitle
 
 \begin{abstract}
-Oracle characters are the earliest known hieroglyphs in China, and are important for modern archaeology, history, Chinese etymology and calligraphy study, while oracle character recognition is still undeveloped due to the scarcity of oracle bones, the long-tail problem in the usage of characters as well as the high degree of intra-class variance in the shapes of oracle characters.
-Since vector form sketch data have been introduced, the oracle character recognition task can be solved either as sequence classification from the perspective of natural language processing (NLP) or image classification from the perspective of computer vision (CV). Therefore, on one hand, we introduce Orc-DeBERTa, which combines the Orc-BERT and the DeBERTa model, and introduce Orc-CM on the other hand.
-We fine-tune and test our models on Oracle-FS dataset under self-supervised and few-shot settings, and experiments show that the performance of Orc-DeBERTa exceeds the state-of-the-art model, and that the performance of Orc-CM is not so good as Orc-DeBERTa, which indicates that vector form data can better represent sketch or oracle characters.
+Oracle characters are the earliest known hieroglyphs in China, and are important for modern archaeology, history, Chinese etymology and calligraphy study. However, nowadays, oracle character recognition is still undeveloped due to the scarcity of oracle bones, the long-tail problem in the usage of characters and the high degree of intra-class variance in the shapes of oracle characters.
+Therefore, to deal with the task of oracle character recognition, data augmentation strategies are quite significant. In this paper, we introduce 2 strategies based on deep learning: Orc-DeBERTa, which combines the Orc-BERT and DeBERTa model, and Orc-MAE, which combines the Orc-BERT and MAE model; we also summarize 3 strategies based on image pre-processing: CutOut, MixUp and CutMix. Based on these data augmentation strategies, we use pre-trained ResNet-18 as the classifier to get the final outputs of oracle character recognition.
+We fine-tune and test CutOut, MixUp and CutMix on the Oracle-FS dataset under the self-supervised and few-shot settings, but not our Orc-DeBERTa and Orc-MAE due to the limitation of computational resources. Experiments show that CutMix performs the best, and all the results exceeds the state of the art.
 \end{abstract}
 
 \section{Introduction}
@@ -51,45 +51,56 @@ Due to the scarcity of oracle bones and the long-tail problem in the usage of ch
 
 Besides, as is shown in Fig. \ref{fig:stroke}, there is a high degree of intra-class variance in the shapes of oracle characters, resulting from the fact that oracle bones were carved by different ancient people in various regions over tens of hundreds of years. As a result, oracle character recognition is a challenging task.
 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.75\linewidth]
+	{../Papers/Stroke.png}
+	\caption{Examples of oracle character images and corresponding stroke data.}
+	\label{fig:stroke}
+\end{figure}
+
 In this paper, we intend to address the problem of oracle character recognition under self-supervision and few-shot settings. More specifically, we will utilize a large-scale unlabeled source data as well as a few labeled training samples for each category to train our model by transferring knowledge.
 
 \section{Related Works}
 \label{sec:related}
 
-\paragraph{Vector form sketch data}
+\paragraph{Sketch Data Processing}
 Unlike MNIST handwritten digit database \citep{MNIST}, which is in pixel form, oracle data or sketch data are always processed  in vector form \citep{Sketch-BERT}, where we use a 5-dimensional vector to show each point in a sketch:
 \begin{equation}
 	O = (\Delta x, \Delta y, p_1, p_2, p_3)
 	\label{equ:vec}
 \end{equation}
-In this form, $ \Delta x, \Delta y $ are continuous values, standing for the position offset between two adjacent points,
+In this form, $ \Delta x, \Delta y $ are continuous values, which stand for the position offset between two adjacent points,
 while $ p_1, p_2, p_3 $ are 0 or 1 and sums to 1, 
 where $ p_2 = 1 $ indicates that the point is at the end of a stroke, and $ p_3 = 1 $ indicates that the point is at the end of the whole character.
+Based on this, quite a lot of works have sprung up to process sketch data using deep neural networks. For example, Sketch-a-Net implements 2 novel data augmentation strategies as well as network ensemble fusion strategies to deal with the task of sketch recognition \citep{Sketch-a-Net}; Sketch-RNN learns a generative neural representation for sketches by Long Short Term Memory networks (LSTM) \citep{Sketch-RNN}; Sketch-R2CNN uses an RNN for stroke attention estimation in the vector space, followed by a CNN for 2D feature extraction in the pixel space, also to deal with the task of sketch recognition \citep{Sketch-R2CNN}; TC-Net uses triplet Siamese network and auxiliary classification loss to deal with the task of sketch retrieval \citep{TC-Net}. 
+Among them, Sketch-BERT is the state-of-the-art, which adopts BERT as its backbone \citep{Sketch-BERT}.
+It gets sketch embeddings as the sum of point embeddings, position embeddings and stroke embeddings, and pre-trains on a novel self-supervised learning task, sketch Gestalt task, including mask position prediction and mask state prediction.
+It can be fine-tuned and tested on downstream tasks, such as sketch recognition, when it adds a \verb|[CLS]| label to the beginning of the sequential data of each sketch, serves as a generic feature extractor of each sketch and adds a standard softmax classification layer at the end.
 
-\paragraph{DeBERTa}
+\paragraph{Oracle Data Processing}
+% \citep{CNN}
+As a sub-domain of sketch data processing, quite a lot of works also have sprung up, however pays less attention to deep neural networks. For example, \cite{Hierachical} propose a novel hierarchical representation that combines a Gabor-related low-level representation and a sparse-encoder-related mid-level representation; \citep{Line} uses the line feature to deal with the task of oracle character recognition; \citep{Neighbor} extract features by a convolutional neural network and perform classification by the Nearest Neighbor algorithm also to deal with the task of oracle character recognition; \citep{Detection} present a unified implementation of the Faster R-CNN, SSD, YOLOv3, RFBnet and RefineDet to deal with the the task of oracle character detection; \citep{SSD} extend the SSD model also to deal with the the task of oracle character detection. 
+Among them, Orc-BERT is the state-of-the-art model in oracle character recognition and is under similar settings as our work \citep{Orc-BERT}.
+First, Orc-BERT is pre-trained on a large-scale unlabeled dataset under self-supervision settings by predicting the masked from the visible. Then, a convolutional neural network based classifier is trained under few-shot learning settings with Orc-BERT as the  data augmentor.
+
+\paragraph{Language Representation Models}
 % \citep{GPT} \citep{XLNet}
-Since the language representation model BERT is introduced, quite a few works intend to improve it \citep{RoBERTa, DeBERTa}.
+Since BERT is introduced, quite a few works intend to improve it \citep{RoBERTa, DeBERTa}, which we can also use to improve the Orc-BERT model.
 DeBERTa is one of them, which implements Disentangled Attention and Enhanced Mask Decoder \citep{DeBERTa, Package}.
 On one hand, while BERT’s input is just the sum of token embedding, segment embedding and position embedding, DeBERTa inputs content embedding and position embedding respectively, and the latter represents the relative position between tokens.
 On the other hand, since Disentangled Attention only captures relative positions instead of the absolute positions, which is also important, those absolute positions should be incorporated after all the Transformer layers and before the softmax layer for Masked Language Modeling (MLM), so that Transformer layers can make better use of those relative positions, while absolute positions can also play a part in the softmax layer.
 
-\paragraph{Sketch-BERT}
-Quite a lot of works have sprung up to process sketch data using deep neural networks. For example, Sketch-a-Net implements 2 novel data augmentation strategies as well as network ensemble fusion strategies to deal with the task of sketch recognition \citep{Sketch-a-Net}; Sketch-RNN studied a generative neural representation for sketches by Long Short Term Memory networks (LSTM) \citep{Sketch-RNN}; Sketch-R2CNN uses an RNN for stroke attention estimation in the vector space, followed by a CNN for 2D feature extraction in the pixel space, also to deal with the task of sketch recognition \citep{Sketch-R2CNN}; TC-Net uses triplet Siamese network and auxiliary classification loss to deal with the task of sketch retrieval \citep{TC-Net}. Among them, Sketch-BERT is the state-of-the-art, which adopts BERT as its backbone \citep{Sketch-BERT}.
-It gets sketch embeddings as the sum of point embeddings, position embeddings and stroke embeddings, and pre-trains on a novel self-supervised learning task, sketch Gestalt task, including mask position prediction and mask state prediction.
-It can be fine-tuned and tested on downstream tasks, such as sketch recognition, when it adds a \verb|[CLS]| label to the beginning of the sequential data of each sketch, serves as a generic feature extractor of each sketch and adds a standard softmax classification layer at the end.
-
-\paragraph{Orc-BERT}
-% \citep{CNN}
-As a sub-domain of sketch data processing, quite a lot of works also have sprung up, however pays less attention to deep neural networks. For example, \cite{Hierachical} propose a novel hierarchical representation that combines a Gabor-related low-level representation and a sparse-encoder-related mid-level representation; \citep{Line} uses the line feature to deal with the task of oracle character recognition; \citep{Neighbor} extract features by a convolutional neural network and perform classification by the Nearest Neighbor algorithm also to deal with the task of oracle character recognition; \citep{Detection} present a unified implementation of the Faster R-CNN, SSD, YOLOv3, RFBnet and RefineDet to deal with the the task of oracle character detection; \citep{SSD} extend Single Shot Multibox Detector also to deal with the the task of oracle character detection. Among them, Orc-BERT is the state-of-the-art model in oracle character recognition and is under similar settings as our work \citep{Orc-BERT}.
-First, Orc-BERT is pre-trained on a large-scale unlabeled dataset under self-supervision settings by predicting the masked from the visible. Then, convolutional neural network based classifier is trained under few-shot learning settings with Orc-BERT as data augmentor.
-
-\paragraph{CM}
-% \citep{MoCo}
-Since the oracle character recognition task can be solved either as sequence classification from the perspective of natural language processing (NLP) or image classification from the perspective of computer vision (CV), image inpainting models can also be used as an augmentor. Among all kinds of inpainting models, Globally and Locally Consistent Image Completion (CM) is a typical and relative simple one \citep{CM}, which uses a fully-convolutional neural network, as well as global and local context discriminators 
+\paragraph{Computer Vision Self-supervised Models}
+% \citep{CM} \citep{MoCo}
+Like language representation models, self-supervised models is also popular in computer vision. 
+Among them, the most representative one is the masked autoencoders (MAE) \citep{MAE}, where random patches of the input image are masked and reconstructed.
+More specifically, MAE uses an asymmetric encoder-decoder architecture, with an encoder that operates only on the visible  patches and a lightweight decoder that reconstructs the original image from the latent representation and mask tokens.  
+Since the oracle character recognition task can be solved either  from the perspective of natural language processing (NLP) or from the perspective of computer vision (CV), we can also try out MAE.
 
 \section{Approach}
 
-Our model contains 2 parts: augmentor and classifier. When we use Orc-DeBERTa as our augmentor, we can input a masked sketch data and get an augmented image; while when we use Orc-CM as our augmentor, we can input a masked image data and also get an augmented image. Then we can input the augmented data into the classifier, which is based on a pre-trained ResNet-18. The whole structure of our model is shown in figure \ref{fig:whole}.
+Our model contains 2 parts: augmentor and classifier. When we use Orc-DeBERTa as our augmentor, we can input a masked sketch data and get an augmented image; when we use Orc-CM as our augmentor, we can input a masked image data and also get an augmented image; we can also use CutOut, MixUp and CutMix to get augmented image likewise. Then we can input the augmented data into the classifier, which is based on a pre-trained ResNet-18. The whole structure of our model is shown in figure \ref{fig:whole}.
 
 \begin{figure}[h]
 	\centering
@@ -99,11 +110,8 @@ Our model contains 2 parts: augmentor and classifier. When we use Orc-DeBERTa as
 \end{figure}
 
 \subsection{Augmentor}
-To increase the volume and diversity of sketches for training, as well as address the challenge of a high degree of intra-class variance in the shapes of sketches, especially under the few-shot settings, data augmentation strategies are quite significant. 
+To increase the volume and diversity of training data, and to address the challenge of a high degree of intra-class variance in the shapes of oracle characters, especially under the few-shot settings, data augmentation strategies are quite significant. 
 % According to \cite{Sketch-a-Net}, we will not only implement traditional strategies like horizontal and vertical shifts, but also stroke removal and sketch deformation strategies.
-
-% \subsubsection{Stroke Removal}
-% \subsubsection{Sketch Deformation}
 
 \subsubsection{Orc-DeBERTa}
 
@@ -154,23 +162,42 @@ where $ V^c = H W_{v,c} $.
 \paragraph{Reconstruction}
 After encoding, we use a fully-connected network to further reconstruct the information and output an image.
 
-\subsubsection{Orc-CM}
+\subsubsection{Orc-MAE}
+
+When an image is inputted into the Orc-MAE, it goes through a modified MAE as shown in figure \ref{fig:MAE} and outputs an image.
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.75\linewidth]{../Papers/MAE.png}
+	\caption{The structure of Orc-MAE.}
+	\label{fig:MAE}
+\end{figure}
+
+\subsubsection{Others}
+
+\paragraph{CutOut}
+
+\paragraph{MixUp}
+
+\paragraph{CutMix}
 
 \subsection{Classifier}
 
 We use pre-trained ResNet-18 as the classifier \citep{ResNet}, which mainly contains two kinds of unit structures as shown in figure \ref{fig:resnet} and whose output is modified to be the probability of the 200 classes.
 
-\begin{figure}[h]
+\begin{figure}[p]
 	\centering
-	\begin{subfigure}{0.49\textwidth}
+	\begin{subfigure}{0.7\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]
 		{../Graph/ResNetI.png}
+		\caption{The 1st unit structure}
 	\end{subfigure}
-	\begin{subfigure}{0.49\textwidth}
+	\begin{subfigure}{0.7\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]
 		{../Graph/ResNetII.png}
+		\caption{The 2nd unit structure}
 	\end{subfigure}
 	\caption{Two kinds of unit structures in ResNet-18.}
 	\label{fig:resnet}
@@ -198,18 +225,10 @@ Besides, since the stroke orders of Chinese characters contain a lot of informat
 Although the stroke orders of oracle characters have been lost in history, there are two fundamental facts: 1) oracle writing is ancestral to modern Chinese script; 2) the modern Chinese writing system is in a left-to-right then top-to-bottom writing order, so assuming oracle character writing is in the same order and using existing approximation algorithm \citep{Handwriting}, character images in pixel format can be converted to data in vector format.  
 Nevertheless, due to 3 failure cases during approximation algorithm, the number of source samples in vector format are 276,028.
 
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.75\linewidth]
-	{../Papers/Stroke.png}
-	\caption{Examples of oracle character images and corresponding stroke data.}
-	\label{fig:stroke}
-\end{figure}
-
 \subsection{Data Pre-process}
 
 \paragraph{Pixel Form Image Data}
-In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. Since pixel value 255 means the white background, we get all pixel values be divided by 256 and be minus by 1.
+In Oracle-FS dataset, all images are gray-scale ones, whose pixel values ranging from 0 to 255. Since pixel value 255 means the white background, we get all pixel values be divided by 256 and minus by 1.
 
 \paragraph{Vector Form Sketch Data}
 First, the vector form sketch data in equation \ref{equ:vec} is simplified into:
@@ -234,24 +253,28 @@ Finally, to get same length for all sketch data, we pad them with $(0, 0, 2)$.
 
 During training, the number of epochs is 200, the batch size is 8, the optimizer is Adam, and the learning rate is 0.0001 and 0.001 for augmentor pre-training and classifier training respectively.
 
-As for the structure of the Orc-DeBERTa augmentor, as what Orc-BERT did, the max input length of stroke is 300, the hidden size is 128 and the number of weight-sharing Transformer layers is 8. The embedding and reconstruction networks are fully-connected with structure of 64-128-128 and 128-128-64-5 respectively. The size of augmented images is $ 50 \times 50 $, and becomes $ 224 \times 224 $ for the classifier.
+As for the structure of the Orc-DeBERTa augmentor, as what Orc-BERT did, the max input length of stroke is 300, the hidden size is 128 and the number of Transformer layers is 8. The embedding and reconstruction networks are fully-connected with structure of 64-128-128 and 128-128-64-5 respectively. The size of augmented images is $ 50 \times 50 $, and becomes $ 224 \times 224 $ for the classifier.
 
-As for the mask probability, as what Orc-BERT did, during pre-training, the probability is 15\%; during augmentation, 80 different mask probability is implemented to generate diverse augmented data, ranging from 0.1 to 0.5, uniformly spacing.
+As for the structure of the Orc-MAE augmentor, similar to Orc-DeBERTa, the hidden size is 128 and the number of Transformer layers is 8. Since the size of input image is $ 50 \times 50 $, we set the patch size to be $ 5 \times 5 $.
+
+% As for the mask probability, as what Orc-BERT did, during pre-training, the probability is 15\%; during augmentation, 80 different mask probability is implemented to generate diverse augmented data, ranging from 0.1 to 0.5, uniformly spacing.
 
 \subsection{Results}
 
-Our results are shown in table \ref{tab:results}.
+Due to the limitation of computational resources, 
+we only fine-tune and test CutOut, MixUp and CutMix. 
+The result is shown in table \ref{tab:results}.
 
 \begin{table}[h]
 	\centering
 	\caption{The results of our experiments}
-	\begin{tabular}{cccc}
+	\begin{tabular}{ccccc}
 		\toprule
-		Setting & No DA & Orc-DeBERTa & Orc-CM \\
+		Setting & No DA & CutOut & MixUp & CutMix \\
 		\midrule
-		1-shot & 0.40100 &  &  \\
-		3-shot & 0.65675 &  &  \\
-		5-shot & 0.76375 &  &  \\
+		1-shot & 0.40100 &  &  &  \\
+		3-shot & 0.65675 &  &  &  \\
+		5-shot & 0.76375 &  &  &  \\
 		\bottomrule
 	\end{tabular}
 	\label{tab:results}
