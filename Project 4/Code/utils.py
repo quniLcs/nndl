@@ -2,7 +2,36 @@ import torch
 from torchvision.transforms import Resize
 
 
-def pretrain_optimize(augmentor, train_loader, lr, device):
+def pretrain_img_optimize(augmentor, train_loader, lr, device):
+    augmentor.train()
+    optimizer = torch.optim.Adam(augmentor.parameters(), lr = lr)
+
+    for inputs in train_loader:
+        inputs = inputs.to(device).unsqueeze(dim = 1).repeat(1, 3, 1, 1)
+        outputs = augmentor(inputs)
+
+        optimizer.zero_grad()
+        outputs.loss.backward()
+        optimizer.step()
+
+
+def pretrain_img_evaluate(augmentor, data_loader, device):
+    augmentor.eval()
+
+    count = 0
+    losses = 0
+
+    for inputs in data_loader:
+        inputs = inputs.to(device).unsqueeze(dim = 1).repeat(1, 3, 1, 1)
+        outputs = augmentor(inputs)
+
+        count += inputs.shape[0]
+        losses += outputs.loss.item() * inputs.shape[0]
+
+    return losses / count
+
+
+def pretrain_seq_optimize(augmentor, train_loader, lr, device):
     augmentor.train()
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(augmentor.parameters(), lr = lr)
@@ -22,7 +51,7 @@ def pretrain_optimize(augmentor, train_loader, lr, device):
         optimizer.step()
 
 
-def pretrain_evaluate(augmentor, data_loader, device):
+def pretrain_seq_evaluate(augmentor, data_loader, device):
     augmentor.eval()
     criterion = torch.nn.MSELoss()
 
@@ -45,7 +74,7 @@ def pretrain_evaluate(augmentor, data_loader, device):
     return losses / count
 
 
-def train_optimize(classifier, augmentor, train_loader, lr, device):
+def train_optimize(classifier, augmentor, train_loader, form, lr, device):
     classifier.train()
     resizer = Resize((224, 224))
     criterion = torch.nn.CrossEntropyLoss()
@@ -56,10 +85,15 @@ def train_optimize(classifier, augmentor, train_loader, lr, device):
         targets = targets.to(device)
 
         if augmentor:
-            prob = torch.randint(high = 80, size = (1, )) / 200 + 0.1
-            mask = torch.rand(inputs.shape[0], 300).to(device)
-            mask = (mask > prob) * 1
-            inputs = augmentor(inputs, mask).reshape((inputs.shape[0], 1, 50, 50))
+            if form == 'img':
+                inputs = inputs.repeat(1, 3, 1, 1)
+                inputs = augmentor(inputs).logits
+                inputs = augmentor.unpatchify(inputs)
+            else:
+                prob = torch.randint(high = 80, size = (1, )) / 200 + 0.1
+                mask = torch.rand(inputs.shape[0], 300).to(device)
+                mask = (mask > prob) * 1
+                inputs = augmentor(inputs, mask).unsqueeze(dim = 1)
 
         inputs = resizer(inputs).repeat(1, 3, 1, 1)
         outputs = classifier(inputs)
@@ -113,6 +147,13 @@ def pretrain(augmentor, train_loader, test_loader, writer, logger, args):
     best_test_loss = torch.inf
     best_test_loss_epoch = 0
 
+    if args.form == 'img':
+        pretrain_optimize = pretrain_img_optimize
+        pretrain_evaluate = pretrain_img_evaluate
+    else:
+        pretrain_optimize = pretrain_seq_optimize
+        pretrain_evaluate = pretrain_seq_evaluate
+
     for idx_epoch in range(args.num_epoch):
         pretrain_optimize(augmentor, train_loader, args.lr, args.device)
 
@@ -136,7 +177,7 @@ def train(classifier, augmentor, train_loader, train_img_loader, test_img_loader
     best_test_acc_t1_epoch = 0
 
     for idx_epoch in range(args.num_epoch):
-        train_optimize(classifier, augmentor, train_loader, args.lr, args.device)
+        train_optimize(classifier, augmentor, train_loader, args.form, args.lr, args.device)
 
         train_acc_t1, train_acc_t5, train_loss = train_evaluate(classifier, train_img_loader, args.device)
         test_acc_t1, test_acc_t5, test_loss = train_evaluate(classifier, test_img_loader, args.device)
