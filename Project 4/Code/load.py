@@ -64,7 +64,8 @@ def pretrain_img_dataset_builder(split = 'train'):
     dataset = []
 
     path = os.path.join('../Data/draw/', split)
-    for sample in os.listdir(path):
+    idx = 0
+    for sample in tqdm(os.listdir(path)):
         dataset.append(img_preprocesser(read_image(os.path.join(path, sample))[0]))
     """
     path = '../Data/img/oracle_source_img'
@@ -103,7 +104,7 @@ def train_test_img_dataset_builder(split = 'train', shot = 1):
     dataset = []
 
     path = '../Data/img/oracle_200_%d_shot/%s' % (shot, split)
-    for idx in range(200):
+    for idx in tqdm(range(200)):
         sub_path = os.path.join(path, '%d' % idx)
         for sample in os.listdir(sub_path):
             dataset.append((img_preprocesser(read_image(os.path.join(sub_path, sample))), idx))
@@ -115,7 +116,7 @@ def train_test_seq_dataset_builder(split = 'train', shot = 1):
     dataset = []
 
     path = '../Data/seq/oracle_200_%d_shot' % shot
-    for idx in range(200):
+    for idx in tqdm(range(200)):
         data = np.load(os.path.join(path, '%d.npz' % idx), allow_pickle = True)
         for sample in data[split]:
             dataset.append((torch.from_numpy(seq_preprocesser(sample)), idx))
