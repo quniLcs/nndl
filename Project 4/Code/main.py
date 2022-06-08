@@ -19,11 +19,15 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", default = 8, type = int)
     parser.add_argument("--num_workers", default = 4, type = int)
     parser.add_argument("--mode", default = 'train', type = str)  # pretrain, train
-    parser.add_argument("--form", default = 'img', type = str)    # img, seq, baseline, cutout, mixup, cutmix
+    parser.add_argument("--form", default = 'img', type = str)    # img, seq, baseline, tradition, cutout, mixup, cutmix
     parser.add_argument("--shot", default = 1, type = int)        # 1, 3, 5
     parser.add_argument("--lr", default = 0.0001, type = float)   # 0.001, 0.0001
     args = parser.parse_args()
     # python main.py --mode train --form baseline --shot 1 --lr 0.0001
+    # python main.py --mode train --form tradition --shot 1 --lr 0.0001
+    # python main.py --mode train --form cutout --shot 1 --lr 0.0001
+    # python main.py --mode train --form mixup --shot 1 --lr 0.0001
+    # python main.py --mode train --form cutmix --shot 1 --lr 0.0001
     # python main.py --mode pretrain --form img --lr 0.001
     # python main.py --mode train --form img --shot 1 --lr 0.0001
     # python main.py --mode pretrain --form seq --lr 0.001
@@ -31,10 +35,10 @@ if __name__ == '__main__':
 
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.time = time.strftime('%Y%m%d%H%M')
-    args.file = '%s_%d_%s_%s' % (args.form, args.shot, args.form, args.time)
+    args.file = '%s_%d_%s' % (args.form, args.shot, args.time)
 
     assert args.mode in ('pretrain', 'train')
-    assert args.form in ('img', 'seq', 'baseline', 'cutout', 'mixup', 'cutmix')
+    assert args.form in ('img', 'seq', 'baseline', 'tradition', 'cutout', 'mixup', 'cutmix')
     assert args.shot in (1, 3, 5)
 
     results = 'results'

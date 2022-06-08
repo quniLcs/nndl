@@ -1,5 +1,7 @@
 import torch
-from torchvision.transforms import Resize
+from torchvision.transforms import Compose, Resize, RandomCrop, RandomHorizontalFlip
+
+from augment import cutout, mixup, cutmix
 
 
 def pretrain_img_optimize(augmentor, train_loader, lr, device):
@@ -77,6 +79,7 @@ def pretrain_seq_evaluate(augmentor, data_loader, device):
 def train_optimize(classifier, augmentor, train_loader, form, lr, device):
     classifier.train()
     resizer = Resize((224, 224))
+    tradition = Compose([RandomCrop(50, padding = 4), RandomHorizontalFlip()])
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(classifier.parameters(), lr = lr)
 
@@ -89,15 +92,40 @@ def train_optimize(classifier, augmentor, train_loader, form, lr, device):
                 inputs = inputs.repeat(1, 3, 1, 1)
                 inputs = augmentor(inputs).logits
                 inputs = augmentor.unpatchify(inputs)
-            else:
+            else:  # form == 'seq'
                 prob = torch.randint(high = 80, size = (1, )) / 200 + 0.1
                 mask = torch.rand(inputs.shape[0], 300).to(device)
                 mask = (mask > prob) * 1
                 inputs = augmentor(inputs, mask).unsqueeze(dim = 1)
 
-        inputs = resizer(inputs).repeat(1, 3, 1, 1)
-        outputs = classifier(inputs)
-        loss = criterion(outputs, targets)
+        if augmentor or form == 'baseline':
+            inputs = resizer(inputs).repeat(1, 3, 1, 1)
+            outputs = classifier(inputs)
+            loss = criterion(outputs, targets)
+
+        elif form == 'tradition':
+            inputs = tradition(inputs)
+            inputs = resizer(inputs).repeat(1, 3, 1, 1)
+            outputs = classifier(inputs)
+            loss = criterion(outputs, targets)
+
+        elif form == 'cutout':
+            cutout(inputs, device = device)
+            inputs = resizer(inputs).repeat(1, 3, 1, 1)
+            outputs = classifier(inputs)
+            loss = criterion(outputs, targets)
+
+        elif form == 'mixup':
+            inputs_mixup, targets_mixup, lambd, index = mixup(inputs, targets)
+            inputs_mixup = resizer(inputs_mixup).repeat(1, 3, 1, 1)
+            outputs = classifier(inputs_mixup)
+            loss = lambd * criterion(outputs, targets) + (1 - lambd) * criterion(outputs, targets_mixup)
+
+        else:  # form == 'cutmix'
+            inputs_cutmix, targets_cutmix, lambd, index = cutmix(inputs, targets)
+            inputs_cutmix = resizer(inputs_cutmix).repeat(1, 3, 1, 1)
+            outputs = classifier(inputs_cutmix)
+            loss = lambd * criterion(outputs, targets) + (1 - lambd) * criterion(outputs, targets_cutmix)
 
         optimizer.zero_grad()
         loss.backward()
