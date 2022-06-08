@@ -113,7 +113,7 @@ To better manage the files, we reconstruct them as follows:
   --test
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Besides reconstruct the `Data/img` and `Data/seq` files by oneself, one can run
+Besides reconstructing the `Data/img` and `Data/seq` files by oneself, one can run
 `rename.py` to rename the the original Chinese file names to numbers, and run
 `draw.py` to convert the large-scale unlabeled sketch data into image data.
 
