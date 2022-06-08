@@ -4,6 +4,8 @@ Orc-MAE and others: Unsupervised Few-Shot Oracle Character Recognition'.
 Orc-DeBERTa, Orc-MAE and others: Unsupervised Few-Shot Oracle Character Recognition
 ===================================================================================
 
+![](Graph/whole.png)
+
 Requirement
 -----------
 
