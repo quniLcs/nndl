@@ -1,7 +1,7 @@
 Attention: Please go to `Project 4` to find the code of the paper 'Orc-DeBERTa,
 Orc-MAE and others: Unsupervised Few-Shot Oracle Character Recognition'.
 
-![](Project 4/Graph/whole.png)
+![](Project%204/Graph/whole.png)
 
 Orc-DeBERTa, Orc-MAE and others: Unsupervised Few-Shot Oracle Character Recognition
 ===================================================================================
