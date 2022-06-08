@@ -64,7 +64,6 @@ def pretrain_img_dataset_builder(split = 'train'):
     dataset = []
 
     path = os.path.join('../Data/draw/', split)
-    idx = 0
     for sample in tqdm(os.listdir(path)):
         dataset.append(img_preprocesser(read_image(os.path.join(path, sample))[0]))
     """
