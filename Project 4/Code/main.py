@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", default = 8, type = int)
     parser.add_argument("--num_workers", default = 4, type = int)
     parser.add_argument("--mode", default = 'train', type = str)  # pretrain, train
-    parser.add_argument("--form", default = 'img', type = str)    # img, seq, baseline, tradition, cutout, mixup, cutmix
+    parser.add_argument("--form", default = 'img', type = str)    # baseline, tradition, cutout, mixup, cutmix, img, seq
     parser.add_argument("--shot", default = 1, type = int)        # 1, 3, 5
     parser.add_argument("--lr", default = 0.0001, type = float)   # 0.001, 0.0001
     args = parser.parse_args()
