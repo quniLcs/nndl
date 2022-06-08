@@ -153,7 +153,7 @@ saved, the number of epochs seems to be not so important. Default: `200`.
 `--form`: the data augmentation strategy, which can be `baseline`, `tradition`,
 `cutout`, `mixup`, `cutmix`, `img` and `seq`, where `baseline` means no data
 augmentation strategy, `tradition` means random padding, cropping and horizontal
-flipping, `img` means `Orc-MAE`, and `seq` means `Orc-DeBERTa`. Default: `img`.
+flipping, `img` means Orc-MAE, and `seq` means Orc-DeBERTa. Default: `img`.
 
 `--shot`: the few shot setting, which can be `1`, `3` or `5`. Default: `1`.
 
