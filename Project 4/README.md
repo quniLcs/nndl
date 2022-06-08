@@ -59,7 +59,7 @@ All the data should be stored in the `Data` directory in the root directory of
 the project, just like the `Code` directory.
 
 The structure of the raw [Oracle-FS​](https://github.com/wenhui-han/Oracle-50K)
-dataset file is as follows:
+ dataset file is as follows:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 --oracle_source
