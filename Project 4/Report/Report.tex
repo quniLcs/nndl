@@ -36,7 +36,7 @@
 \begin{abstract}
 Oracle characters are the earliest known hieroglyphs in China, and are important for modern archaeology, history, Chinese etymology and calligraphy study. However, nowadays, oracle character recognition is still undeveloped due to the scarcity of oracle bones, the long-tail problem in the usage of characters and the high degree of intra-class variance in the shapes of oracle characters.
 Therefore, to deal with the task of oracle character recognition, data augmentation strategies are quite significant. In this paper, we introduce 2 strategies based on deep learning: Orc-DeBERTa, which combines the Orc-BERT and DeBERTa model, and Orc-MAE, which combines the Orc-BERT and MAE model; we also summarize 3 strategies based on image pre-processing: CutOut, MixUp and CutMix. Based on these data augmentation strategies, we use pre-trained ResNet-18 as the classifier to get the final outputs of oracle character recognition.
-We fine-tune and test CutOut, MixUp and CutMix on the Oracle-FS dataset under the self-supervised and few-shot settings, but not our Orc-DeBERTa and Orc-MAE due to the limitation of computational resources. Experiments show that CutMix performs the best, and all the results exceeds the state of the art.
+We fine-tune and test CutOut, MixUp and CutMix on the Oracle-FS dataset under the self-supervised and few-shot settings, but not our Orc-DeBERTa and Orc-MAE due to the limitation of computational resources. Experiments show that all of the results exceeds the state of the art. Our code has been released on \verb|https://github.com/quniLcs/nndl|.
 \end{abstract}
 
 \section{Introduction}
@@ -51,7 +51,7 @@ Due to the scarcity of oracle bones and the long-tail problem in the usage of ch
 
 Besides, as is shown in Fig. \ref{fig:stroke}, there is a high degree of intra-class variance in the shapes of oracle characters, resulting from the fact that oracle bones were carved by different ancient people in various regions over tens of hundreds of years. As a result, oracle character recognition is a challenging task.
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.75\linewidth]
 	{../Papers/Stroke.png}
@@ -164,9 +164,9 @@ After encoding, we use a fully-connected network to further reconstruct the info
 
 \subsubsection{Orc-MAE}
 
-When an image is inputted into the Orc-MAE, it goes through a modified MAE as shown in figure \ref{fig:MAE} and outputs an image.
+When an image is inputted into the Orc-MAE, it goes through a modified MAE as shown in figure \ref{fig:MAE} and outputs an image. More specifically, MAE uses an asymmetric encoder-decoder architecture, with an encoder that operates only on the visible  patches and a lightweight decoder that reconstructs the original image from the latent representation and mask tokens.  
 
-\begin{figure}[p]
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.75\linewidth]{../Papers/MAE.png}
 	\caption{The structure of Orc-MAE.}
@@ -176,10 +176,20 @@ When an image is inputted into the Orc-MAE, it goes through a modified MAE as sh
 \subsubsection{Others}
 
 \paragraph{CutOut}
+To implement CutOut, for every input image during training, choose a random point as the central point of the mask, and set the square area around it to 0 \citep{CutOut}.
 
 \paragraph{MixUp}
+MixUp convex combines a pair of input images and labels during training, and the convex combination coefficient follows the Beta distribution \citep{MixUp}. More specifically, for input images $x_i, x_j$, labels $y_i, y_j$, and the convex combination coefficient $\lambda \sim Beta(\alpha, \alpha)$, the new image and label are:
+\begin{align*}
+	x &= \lambda x_i + (1 - \lambda) x_j \\
+	y &= \lambda y_i + (1 - \lambda) y_j
+\end{align*}
 
 \paragraph{CutMix}
+CutMix combines the above two strategies \citep{CutMix}. More specifically, for input images $x_i, x_j$, labels $y_i, y_j$, and the convex combination coefficient $\lambda \sim Beta(\alpha, \alpha)$, first choose a random point as the central point from the image $ x_i $, whose size is $ H \times W $, and set the square area around it, whose size is $ H \sqrt{1 - \lambda} \times W \sqrt{1 - \lambda}$, to the value of image $x_j$, which means the ratio of this area is $ 1 - \lambda $. Since the square area may be beyond the boundary of the image, finally set $ \lambda $ to the ratio of area which keeps the initial value of the image $ x_i $, and the new label is:
+\begin{align*}
+	y &= \lambda y_i + (1 - \lambda) y_j
+\end{align*}
 
 \subsection{Classifier}
 
@@ -187,17 +197,17 @@ We use pre-trained ResNet-18 as the classifier \citep{ResNet}, which mainly cont
 
 \begin{figure}[p]
 	\centering
-	\begin{subfigure}{0.7\textwidth}
+	\begin{subfigure}{0.75\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]
 		{../Graph/ResNetI.png}
-		\caption{The 1st unit structure}
+		\caption{The 1st unit structure.}
 	\end{subfigure}
-	\begin{subfigure}{0.7\textwidth}
+	\begin{subfigure}{0.75\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]
 		{../Graph/ResNetII.png}
-		\caption{The 2nd unit structure}
+		\caption{The 2nd unit structure.}
 	\end{subfigure}
 	\caption{Two kinds of unit structures in ResNet-18.}
 	\label{fig:resnet}
@@ -210,7 +220,7 @@ We use pre-trained ResNet-18 as the classifier \citep{ResNet}, which mainly cont
 \paragraph{Oracle-50K}
 In this dataset, labeled oracle character samples are collected  from three data sources using different strategies \citep{Orc-BERT}. There are 2668 unique characters and 59081 images in total. Besides, as is shown in Fig. \ref{fig:distribution}, there exists a long-tail distribution of oracle character samples in Oracle-50K. Therefore, oracle character recognition is a natural few-shot learning problem.
 
-\begin{figure}[h]
+\begin{figure}[p]
 	\centering
 	\includegraphics[width=0.75\linewidth]
 	{../Papers/Distribution.png}
@@ -260,26 +270,59 @@ As for the structure of the Orc-MAE augmentor, similar to Orc-DeBERTa, the hidde
 
 \subsection{Results}
 
-Due to the limitation of computational resources, 
-we only fine-tune and test CutOut, MixUp and CutMix. 
-The result is shown in table \ref{tab:results}.
+Due to the limitation of computational resources, we only fine-tune and test the baseline model, tradition data augmentation model, as well as CutOut, MixUp and CutMix. The result is shown in table \ref{tab:results}.
 
 \begin{table}[h]
 	\centering
 	\caption{The results of our experiments}
-	\begin{tabular}{ccccc}
+	\begin{tabular}{cccccc}
 		\toprule
-		Setting & No DA & CutOut & MixUp & CutMix \\
+		Setting & No DA & Tradition & CutOut & MixUp & CutMix \\
 		\midrule
-		1-shot & 0.40100 &  &  &  \\
-		3-shot & 0.65675 &  &  &  \\
-		5-shot & 0.76375 &  &  &  \\
+		1-shot & 0.40100 & \textbf{0.49075}
+		& 0.38600 & 0.36750 & 0.36275 \\
+		3-shot & 0.65675 & \textbf{0.73375}
+		& 0.64305 & 0.64850 & 0.63250 \\
+		5-shot & 0.76375 & \textbf{0.82650}
+		& 0.75325 & 0.75875 & 0.72875 \\
 		\bottomrule
 	\end{tabular}
 	\label{tab:results}
 \end{table}
 
+It seems that those fancy data augmentation strategies like CutOut, MixUp and CutMix don't work well on oracle character recognition. One possible reason is that different parts of one Chinese character usually have their own relatively independent meanings, so CutOut, MixUp and CutMix can sometimes output another existing character, instead of just outputting part of the initial character or the combination of two irrelative characters, which confuses the model.
+
+After all, while all of the results exceeds the state of the art, the tradition data augmentation strategies works best, which includes random padding, cropping and horizontal flipping and whose accuracy curve is shown in figure \ref{fig:result}.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.32\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]
+		{../Plot/tradition1/top1.png}
+		\caption{1-shot accuracy.}
+	\end{subfigure}
+	\begin{subfigure}{0.32\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]
+		{../Plot/tradition3/top1.png}
+		\caption{3-shot accuracy.}
+	\end{subfigure}
+	\begin{subfigure}{0.32\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]
+		{../Plot/tradition5/top1.png}
+		\caption{5-shot accuracy.}
+	\end{subfigure}
+	\caption{The accuracy curves of the the tradition data augmentation strategies.}
+	\label{fig:result}
+\end{figure}
+
 \section{Conclusion}
+
+In this paper, we try to deal with the task of oracle character recognition under natural settings, or self-supervised and few-shot settings. Therefore, we introduce 2 strategies based on deep learning: Orc-DeBERTa and Orc-MAE; we also summarize 3 strategies based on image pre-processing: CutOut, MixUp and CutMix. Based on these data augmentation strategies, we use pre-trained ResNet-18 as the classifier to get the final outputs.
+
+Due to the limitation of computational resources, we only fine-tune and test the baseline model, tradition data augmentation model, as well as CutOut, MixUp and CutMix, on the Oracle-FS dataset. Experiments show that all of the results exceeds the state of the art. While those fancy data augmentation strategies like CutOut, MixUp and CutMix don't work well possibly because of the characteristic of Chinese characters, the tradition data augmentation strategies works best, which includes random padding, cropping and horizontal flipping. After all, we look forward to the better performance of our untested Orc-DeBERTa and Orc-MAE once given enough computational resource.
 
 \bibliographystyle{unsrtnat}
 \bibliography{Report}
